@@ -242,12 +242,68 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--cream);color:var(--
 .onedrive-box ol{padding-left:16px;color:#444;line-height:1.8}
 .onedrive-box li{font-size:.75rem}
 
-@media print{
-  .site-header,.job-bar,.sidebar,.items-area,.search-row,.report-actions{display:none!important}
-  .calc-layout{display:block}.main-content{overflow:visible;height:auto}
-  .results-zone{padding:6px;border:none}.page{display:block!important}
-  body{background:#fff}
-}
+/* ── Tier Finder page ── */
+.tier-layout{padding:24px;max-width:1100px;margin:0 auto}
+.tier-page-header{margin-bottom:20px}
+.tier-page-header h2{font-family:'Playfair Display',serif;font-size:1.4rem;margin-bottom:4px}
+.tier-page-header p{color:var(--muted);font-size:.82rem;line-height:1.55}
+.tier-top-row{display:grid;grid-template-columns:1fr 340px;gap:20px;align-items:start}
+@media(max-width:900px){.tier-top-row{grid-template-columns:1fr}}
+.garment-table-wrap{background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.garment-table-head{background:var(--navy);display:grid;grid-template-columns:36px 1fr 1fr 110px 36px;gap:0;padding:8px 12px}
+.garment-table-head span{font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.5)}
+.garment-row{display:grid;grid-template-columns:36px 1fr 1fr 110px 36px;gap:6px;padding:7px 12px;border-bottom:1px solid var(--line);align-items:center}
+.garment-row:last-child{border-bottom:none}
+.garment-row:hover{background:#faf6ef}
+.garment-num{font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--muted);text-align:center}
+.garment-input{padding:5px 8px;border:1.5px solid var(--line);border-radius:6px;font-family:'IBM Plex Sans',sans-serif;font-size:.8rem;color:var(--ink);background:var(--paper);width:100%;transition:border-color .15s}
+.garment-input:focus{outline:none;border-color:var(--amber)}
+.garment-tier-badge{font-size:.65rem;font-weight:700;padding:3px 8px;border-radius:12px;text-align:center;min-width:60px}
+.garment-del{width:26px;height:26px;border:none;background:#FFEBEE;color:var(--danger);border-radius:5px;cursor:pointer;font-size:.9rem;display:flex;align-items:center;justify-content:center;transition:all .12s}
+.garment-del:hover{background:#FFCDD2}
+.add-garment-btn{width:100%;padding:8px;border:2px dashed var(--line);border-radius:7px;background:none;color:var(--muted);font-family:'IBM Plex Sans',sans-serif;font-size:.8rem;cursor:pointer;transition:all .15s;margin-top:6px}
+.add-garment-btn:hover{border-color:var(--amber);color:var(--amber);background:#FFFBF0}
+.tier-analyze-btn{width:100%;padding:11px;border:none;border-radius:8px;background:linear-gradient(135deg,#6A1B9A,#0D1B35);color:#fff;font-family:'IBM Plex Sans',sans-serif;font-size:.85rem;font-weight:700;cursor:pointer;transition:all .15s;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:8px}
+.tier-analyze-btn:hover{opacity:.9;transform:translateY(-1px)}.tier-analyze-btn:disabled{opacity:.5;cursor:wait}
+.tier-analyze-btn .spinner{width:15px;height:15px;border:2px solid rgba(255,255,255,.3);border-top:2px solid #fff;border-radius:50%;animation:spin .7s linear infinite;display:none}
+.tier-analyze-btn.loading .spinner{display:block}
+/* Result panel */
+.tier-result-panel{background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.trp-head{padding:14px 18px;border-bottom:2px solid var(--warm)}
+.trp-head h3{font-size:.85rem;font-weight:700;margin-bottom:2px}
+.trp-head p{font-size:.72rem;color:var(--muted)}
+.trp-body{padding:16px 18px}
+.tier-result-big{text-align:center;padding:20px 12px;border-radius:8px;margin-bottom:14px}
+.trb-label{font-size:.65rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px}
+.trb-tier{font-family:'Playfair Display',serif;font-size:2.4rem;font-weight:700;line-height:1}
+.trb-name{font-size:1rem;font-weight:600;margin-top:4px}
+.trb-conf{font-size:.72rem;margin-top:6px;opacity:.8}
+.tier-bar-wrap{margin-bottom:14px}
+.tier-bar-label{display:flex;justify-content:space-between;font-size:.68rem;color:var(--muted);margin-bottom:4px}
+.tier-bars{display:flex;flex-direction:column;gap:4px}
+.tier-bar-row{display:flex;align-items:center;gap:8px}
+.tbr-label{font-size:.68rem;font-weight:600;width:80px;flex-shrink:0}
+.tbr-track{flex:1;height:14px;background:#f0ece6;border-radius:7px;overflow:hidden}
+.tbr-fill{height:100%;border-radius:7px;transition:width .5s ease}
+.tbr-pct{font-family:'IBM Plex Mono',monospace;font-size:.65rem;width:32px;text-align:right;color:var(--muted)}
+.tier-garment-list{margin-top:12px}
+.tgl-head{font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.tgl-row{display:flex;align-items:center;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f0ebe2;font-size:.76rem}
+.tgl-row:last-child{border-bottom:none}
+.tgl-name{color:var(--ink);font-weight:500}
+.tgl-brand{color:var(--muted);font-size:.7rem}
+.tier-apply-btn{width:100%;padding:9px;border:none;border-radius:7px;background:var(--amber);color:var(--ink);font-family:'IBM Plex Sans',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;transition:all .15s;margin-top:12px}
+.tier-apply-btn:hover{background:var(--amber2)}
+.tier-placeholder{text-align:center;padding:32px 20px;color:var(--muted)}
+.tier-placeholder .tp-icon{font-size:2.5rem;margin-bottom:10px}
+.tier-placeholder p{font-size:.8rem;line-height:1.6}
+/* Tier multiplier admin */
+.tmult-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:12px}
+.tmult-field{display:flex;flex-direction:column;gap:3px}
+.tmult-label{font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.tmult-input{padding:5px 8px;border:1.5px solid var(--line);border-radius:6px;font-family:'IBM Plex Mono',monospace;font-size:.85rem;color:var(--ink);background:#fefefe;width:100%}
+.tmult-input:focus{outline:none;border-color:var(--amber)}
+
 </style>
 </head>
 <body>
@@ -263,6 +319,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--cream);color:var(--
   </div>
   <nav class="header-nav">
     <button class="nav-btn active" onclick="showPage('calc',this)">⚡ Calculator</button>
+    <button class="nav-btn" onclick="showPage('tier',this)">🎯 Tier Finder</button>
     <button class="nav-btn" onclick="showPage('brands',this)">🏷️ Brands</button>
     <button class="nav-btn" onclick="showPage('admin',this)">⚙️ Manage</button>
   </nav>
@@ -339,6 +396,80 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--cream);color:var(--
 </div>
 </div>
 
+<!-- ══ PAGE: TIER FINDER ══ -->
+<div class="page" id="page-tier">
+<div class="tier-layout">
+  <div class="tier-page-header">
+    <h2>🎯 Tier Finder</h2>
+    <p>Enter up to 20 garments with their type and brand. The AI will analyse each brand against Australian market tiers and recommend the most appropriate replacement tier for your claim — with a confidence breakdown.</p>
+  </div>
+  <div class="tier-top-row">
+    <!-- Left: garment entry table -->
+    <div>
+      <div class="garment-table-wrap">
+        <div class="garment-table-head">
+          <span>#</span>
+          <span>Garment / Item Type</span>
+          <span>Brand</span>
+          <span>Detected Tier</span>
+          <span></span>
+        </div>
+        <div id="garmentRows"></div>
+      </div>
+      <button class="add-garment-btn" onclick="addGarmentRow()">+ Add another garment</button>
+      <button class="tier-analyze-btn" id="tierAnalyzeBtn" onclick="analyzeTier()">
+        <div class="spinner"></div>
+        <span class="ai-label">✨ Analyse Brands &amp; Find Tier</span>
+      </button>
+      <div style="font-size:.7rem;color:var(--muted);margin-top:8px;line-height:1.5">
+        Add at least 5 garments for a reliable result. The AI cross-references each brand against the Australian market tier definitions and weights the result by item count.
+      </div>
+    </div>
+
+    <!-- Right: result panel -->
+    <div class="tier-result-panel">
+      <div class="trp-head">
+        <h3>Tier Recommendation</h3>
+        <p>Enter garments and click Analyse to see results</p>
+      </div>
+      <div class="trp-body" id="tierResultBody">
+        <div class="tier-placeholder">
+          <div class="tp-icon">🔍</div>
+          <p>Enter garment types and brands on the left, then click <strong>Analyse Brands &amp; Find Tier</strong> to get an AI-powered tier recommendation with confidence scores.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tier reference -->
+  <div style="margin-top:20px">
+    <div style="font-size:.62rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Australian Market Tier Reference</div>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px">
+      <div style="background:#E8F5E9;border-left:4px solid #2E7D32;border-radius:6px;padding:10px 12px">
+        <div style="font-size:.65rem;font-weight:700;color:#2E7D32;margin-bottom:4px">T1 — BUDGET</div>
+        <div style="font-size:.7rem;color:#333;line-height:1.6">Kmart, Big W, Target, Aldi, H&M, Shein AU, Temu, Best&Less, Cotton On, Rivers</div>
+      </div>
+      <div style="background:#FFF8E1;border-left:4px solid #BF6F00;border-radius:6px;padding:10px 12px">
+        <div style="font-size:.65rem;font-weight:700;color:#BF6F00;margin-bottom:4px">T2 — ECONOMY</div>
+        <div style="font-size:.7rem;color:#333;line-height:1.6">Uniqlo, Bonds, Jeanswest, Myer Own, Rockmans, Millers, Van Heusen, Bambury, Canningvale</div>
+      </div>
+      <div style="background:#FBE9E7;border-left:4px solid #BF360C;border-radius:6px;padding:10px 12px">
+        <div style="font-size:.65rem;font-weight:700;color:#BF360C;margin-bottom:4px">T3 — MID-RANGE</div>
+        <div style="font-size:.7rem;color:#333;line-height:1.6">Country Road, Witchery, Sportscraft, Sheridan, Seafolly, Kathmandu, Assembly Label, MJ Bale</div>
+      </div>
+      <div style="background:#F3E5F5;border-left:4px solid #4A148C;border-radius:6px;padding:10px 12px">
+        <div style="font-size:.65rem;font-weight:700;color:#4A148C;margin-bottom:4px">T4 — PREMIUM</div>
+        <div style="font-size:.7rem;color:#333;line-height:1.6">Zimmermann, Hugo Boss, Calvin Klein, Baksana, Lululemon, Coach, Rebecca Vallance, Aje</div>
+      </div>
+      <div style="background:#E3F2FD;border-left:4px solid #0D47A1;border-radius:6px;padding:10px 12px">
+        <div style="font-size:.65rem;font-weight:700;color:#0D47A1;margin-bottom:4px">T5 — LUXURY</div>
+        <div style="font-size:.7rem;color:#333;line-height:1.6">Carla Zampatti, Frette, Loro Piana, Moncler, Hermes, Paolo Sebastian, Maticevski, Brunello Cucinelli</div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
 <!-- ══ PAGE: BRANDS ══ -->
 <div class="page" id="page-brands">
 <div class="brands-layout">
@@ -372,6 +503,31 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--cream);color:var(--
   <div class="admin-header"><h2>Manage Items &amp; Pricing</h2><p>Edit restoration base prices, replacement costs, overhead rates, damage multipliers, and add or remove items.</p></div>
   <div class="admin-grid">
 
+    <!-- Tier Multipliers -->
+    <div class="admin-card" style="grid-column:1/-1">
+      <div class="admin-card-head"><h3>Tier Price Multipliers</h3><span style="font-size:.72rem;color:var(--muted)">Controls how replacement costs scale between tiers</span></div>
+      <div class="admin-card-body">
+        <p style="font-size:.78rem;color:var(--muted);margin-bottom:12px;line-height:1.55">Each multiplier sets how much more expensive the next tier is relative to T1 (Budget). E.g. T2 ×1.5 means T2 items cost 1.5× the T1 price. The AI Tier Finder and the item pricing in the calculator use these ratios when generating or validating prices.</p>
+        <div class="tmult-grid">
+          <div class="tmult-field"><div class="tmult-label">T1 Budget (base)</div><input type="number" class="tmult-input" value="1.0" disabled style="opacity:.5;cursor:not-allowed"/></div>
+          <div class="tmult-field"><div class="tmult-label">T2 Economy ×</div><input type="number" class="tmult-input" id="tmult_t2" value="1.8" min="1.1" max="5" step="0.1"/></div>
+          <div class="tmult-field"><div class="tmult-label">T3 Mid-Range ×</div><input type="number" class="tmult-input" id="tmult_t3" value="3.2" min="1.5" max="10" step="0.1"/></div>
+          <div class="tmult-field"><div class="tmult-label">T4 Premium ×</div><input type="number" class="tmult-input" id="tmult_t4" value="7.0" min="2" max="30" step="0.5"/></div>
+          <div class="tmult-field"><div class="tmult-label">T5 Luxury ×</div><input type="number" class="tmult-input" id="tmult_t5" value="15.0" min="3" max="80" step="0.5"/></div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <button class="btn-sm btn-save-all" onclick="saveTierMultipliers()">Save Tier Multipliers</button>
+          <div style="display:flex;gap:8px;flex-wrap:wrap" id="tierMultPreview"></div>
+        </div>
+        <div class="notice" style="margin-top:10px">
+          <strong>Quick presets:</strong>
+          <button onclick="setTierPreset([1,1.5,2.5,5,12])" style="margin-left:8px;padding:2px 9px;border:1px solid var(--mid);border-radius:4px;background:none;cursor:pointer;font-size:.72rem;color:var(--mid)">Tight (1 / 1.5 / 2.5 / 5 / 12)</button>
+          <button onclick="setTierPreset([1,1.8,3.2,7,15])" style="margin-left:4px;padding:2px 9px;border:1px solid var(--mid);border-radius:4px;background:none;cursor:pointer;font-size:.72rem;color:var(--mid)">Standard (1 / 1.8 / 3.2 / 7 / 15)</button>
+          <button onclick="setTierPreset([1,2,4,10,25])" style="margin-left:4px;padding:2px 9px;border:1px solid var(--mid);border-radius:4px;background:none;cursor:pointer;font-size:.72rem;color:var(--mid)">Wide (1 / 2 / 4 / 10 / 25)</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Multipliers -->
     <div class="admin-card">
       <div class="admin-card-head"><h3>Damage Multipliers</h3></div>
@@ -386,6 +542,43 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--cream);color:var(--
           </tbody>
         </table>
         <div style="margin-top:12px;"><button class="btn-sm btn-save-all" onclick="saveMultipliers()">Save Multipliers</button></div>
+      </div>
+    </div>
+
+    <!-- AI Settings -->
+    <div class="admin-card" style="grid-column:1/-1">
+      <div class="admin-card-head">
+        <h3>🤖 AI Settings — API Key</h3>
+        <span style="font-size:.72rem;color:var(--muted)">Required for Tier Finder and AI pricing generator</span>
+      </div>
+      <div class="admin-card-body">
+        <div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end;margin-bottom:10px">
+          <div class="form-group">
+            <label>Anthropic API Key</label>
+            <input type="password" class="form-input" id="apiKeyInput"
+              placeholder="sk-ant-api03-..."
+              style="font-family:'IBM Plex Mono',monospace;font-size:.78rem;letter-spacing:.05em"/>
+            <div style="font-size:.65rem;color:var(--muted);margin-top:3px">Stored in this browser only (localStorage). Not sent anywhere except Anthropic.</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <button class="btn-sm btn-save-all" onclick="saveApiKey()">Save Key</button>
+            <button class="btn-sm" style="background:#FFEBEE;color:var(--danger)" onclick="clearApiKey()">Clear</button>
+          </div>
+        </div>
+        <div id="apiKeyStatus" style="font-size:.76rem;margin-bottom:14px"></div>
+        <div style="background:#F3E5F5;border:1px solid #7B1FA2;border-radius:8px;padding:12px 16px">
+          <div style="font-size:.72rem;font-weight:700;color:#4A148C;margin-bottom:8px">How to get your API key</div>
+          <div style="font-size:.76rem;color:#333;line-height:1.9">
+            <strong>1.</strong> Go to <strong>console.anthropic.com</strong> → sign in or create a free account<br/>
+            <strong>2.</strong> Click <strong>API Keys</strong> in the left sidebar → <strong>Create Key</strong><br/>
+            <strong>3.</strong> Copy the key (starts with <code style="background:#eee;padding:1px 5px;border-radius:3px">sk-ant-</code>) and paste it above<br/>
+            <strong>4.</strong> Recommended: set a <strong>monthly spend limit</strong> (e.g. $10 AUD) under <strong>Billing → Limits</strong> so there are no surprises<br/>
+            <strong>5.</strong> Each team member enters the key once on their own device — it's saved in their browser
+          </div>
+        </div>
+        <div style="font-size:.71rem;color:var(--muted);margin-top:8px;line-height:1.55">
+          💡 Cost guide: The Tier Finder uses ~1,000–2,000 tokens per analysis (≈ $0.003–0.006 AUD). The AI pricing generator uses ~300 tokens (≈ $0.001). Normal usage costs cents per month, not dollars.
+        </div>
       </div>
     </div>
 
@@ -482,9 +675,42 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--cream);color:var(--
 
 <script>
 // ═══════════════════════════════════════════════════════════════
-//  DATA — paste full items array from v3 (truncated here for brevity;
-//  in production this contains all 90+ items with full brands data)
+//  AI CONFIG — paste your Anthropic API key below
+//  Get your key from: console.anthropic.com → API Keys
+//  Tip: set a monthly spend limit in the Anthropic console
 // ═══════════════════════════════════════════════════════════════
+const AI_CONFIG = {
+  apiKey: localStorage.getItem('ccpro_api_key') || '',
+  model:  'claude-haiku-4-5-20251001',
+};
+
+async function callAI(prompt, maxTokens = 1000) {
+  const key = AI_CONFIG.apiKey.trim();
+  if (!key) throw new Error('No API key configured. Go to Manage → AI Settings and enter your Anthropic API key.');
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': key,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
+    body: JSON.stringify({
+      model: AI_CONFIG.model,
+      max_tokens: maxTokens,
+      messages: [{ role: 'user', content: prompt }]
+    })
+  });
+  if (!resp.ok) {
+    const errText = await resp.text().catch(() => '');
+    throw new Error(`API error ${resp.status}: ${errText.slice(0, 160)}`);
+  }
+  const data = await resp.json();
+  return (data.content || []).map(c => c.text || '').join('');
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  DATA
 let items = [
 {cat:"Clothing – Bottoms",name:"Trouser",restore:18,t1:30,t2:60,t3:115,t4:225,t5:450,brands:{t1:"Kmart, Big W, Target, Rivers, Lowes, Best&Less, Aldi, H&M, Shein AU, Temu",t2:"Jeanswest, Uniqlo, Myer Own Label, Rivers Premium, Rockmans, Millers, Crossroads, Review, Sussan, Gazman",t3:"Country Road, Witchery, Politix, Sportscraft, Trenery, Seed Heritage, Saba, Oxford, Assembly Label, MJ Bale",t4:"Calvin Klein, Hugo Boss, Tommy Hilfiger, Polo Ralph Lauren, Scanlan Theodore, Veronika Maine, Aje, Bec & Bridge, Gant, Tiger of Sweden",t5:"Carla Zampatti, Zimmermann, Camilla, Burberry, Theory, Vince, Max Mara, Loro Piana, The Row, Maticevski"}},
 {cat:"Clothing – Bottoms",name:"Trouser Silk/Delicate",restore:28,t1:55,t2:100,t3:190,t4:375,t5:750,brands:{t1:"Target, Big W, H&M, Kmart, Cotton On, Shein AU, Temu, Best&Less, Aldi, Suzanne Grae",t2:"Uniqlo, Myer Own, Jeanswest, Princess Highway, Review, Rockmans, Millers, Sussan, Crossroads, City Chic",t3:"Scanlan Theodore, Witchery, Country Road, Saba, Seed Heritage, Trenery, Sportscraft, Oxford, Jac+Jack, Assembly Label",t4:"Camilla, Zimmermann, Carla Zampatti, Rebecca Vallance, Veronika Maine, Aje, Bec & Bridge, Manning Cartell, Ginger & Smart, Sass & Bide",t5:"Zimmermann, Carla Zampatti, Maticevski, Alex Perry, Bec & Bridge top-end, Paolo Sebastian, Camilla couture, Ginger & Smart, Lover, Ae'lkemi"}},
@@ -539,8 +765,16 @@ function showPage(id,btn){
   document.getElementById('page-'+id).classList.add('active');
   if(btn)btn.classList.add('active');
   document.getElementById('jobBar').style.display=id==='calc'?'block':'none';
-  if(id==='admin'){renderAdminTable();syncOHRatesToAdmin()}
+  if(id==='admin'){renderAdminTable();syncOHRatesToAdmin();syncTierMultAdmin();loadApiKeyIntoAdmin()}
   if(id==='brands')renderBrandsTable();
+  if(id==='tier'){
+    if(garmentRows.length===0){
+      // Pre-populate 8 empty rows
+      for(let i=0;i<8;i++) addGarmentRow();
+    } else {
+      renderGarmentRows();
+    }
+  }
 }
 function updateRef(){
   const v=document.getElementById('claimNum').value||document.getElementById('jobNum').value||'New Job';
@@ -1238,13 +1472,7 @@ Where:
 
 Each tier should be 1.8–2.8x the previous tier. Return only the JSON, no other text.`;
 
-    const resp=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:300,messages:[{role:'user',content:prompt}]})
-    });
-    const data=await resp.json();
-    const text=data.content?.map(c=>c.text||'').join('')||'';
+    const text = await callAI(prompt, 300);
     const clean=text.replace(/```json|```/g,'').trim();
     const parsed=JSON.parse(clean);
     const{t1,t2,t3,t4,t5}=parsed;
@@ -1425,9 +1653,280 @@ function loadJobFile(event){
   reader.readAsText(file);event.target.value='';
 }
 
+// ─── TIER MULTIPLIERS ────────────────────────────────────────
+let tierMultipliers = {t1:1.0, t2:1.8, t3:3.2, t4:7.0, t5:15.0};
+const TIER_COLORS   = ['#2E7D32','#BF6F00','#BF360C','#4A148C','#0D47A1'];
+const TIER_BG       = ['#E8F5E9','#FFF8E1','#FBE9E7','#F3E5F5','#E3F2FD'];
+const TIER_NAMES    = ['Budget','Economy','Mid-Range','Premium','Luxury'];
+
+function saveTierMultipliers(){
+  tierMultipliers.t2 = parseFloat(document.getElementById('tmult_t2').value)||1.8;
+  tierMultipliers.t3 = parseFloat(document.getElementById('tmult_t3').value)||3.2;
+  tierMultipliers.t4 = parseFloat(document.getElementById('tmult_t4').value)||7.0;
+  tierMultipliers.t5 = parseFloat(document.getElementById('tmult_t5').value)||15.0;
+  renderTierMultPreview();
+  alert('Tier multipliers saved. These ratios will be used by the AI Tier Finder and pricing generator.');
+}
+
+function setTierPreset(vals){
+  document.getElementById('tmult_t2').value = vals[1];
+  document.getElementById('tmult_t3').value = vals[2];
+  document.getElementById('tmult_t4').value = vals[3];
+  document.getElementById('tmult_t5').value = vals[4];
+  saveTierMultipliers();
+}
+
+function renderTierMultPreview(){
+  const preview = document.getElementById('tierMultPreview');
+  if(!preview) return;
+  const mults = [1, tierMultipliers.t2, tierMultipliers.t3, tierMultipliers.t4, tierMultipliers.t5];
+  preview.innerHTML = mults.map((m,i)=>`
+    <span style="font-size:.7rem;padding:3px 9px;border-radius:12px;background:${TIER_BG[i]};color:${TIER_COLORS[i]};font-weight:700">
+      T${i+1} ×${m.toFixed(1)}
+    </span>`).join('');
+}
+
+function syncTierMultAdmin(){
+  document.getElementById('tmult_t2').value = tierMultipliers.t2;
+  document.getElementById('tmult_t3').value = tierMultipliers.t3;
+  document.getElementById('tmult_t4').value = tierMultipliers.t4;
+  document.getElementById('tmult_t5').value = tierMultipliers.t5;
+  renderTierMultPreview();
+}
+
+// ─── TIER FINDER ─────────────────────────────────────────────
+let garmentRows = [];
+let garmentIdCounter = 0;
+
+function addGarmentRow(type='', brand=''){
+  const id = ++garmentIdCounter;
+  garmentRows.push({id, type, brand, detectedTier: null});
+  renderGarmentRows();
+}
+
+function removeGarmentRow(id){
+  garmentRows = garmentRows.filter(r=>r.id!==id);
+  renderGarmentRows();
+}
+
+function renderGarmentRows(){
+  const container = document.getElementById('garmentRows');
+  if(!container) return;
+  if(garmentRows.length === 0){
+    container.innerHTML = '<div style="padding:16px;text-align:center;color:var(--muted);font-size:.8rem">No garments added yet. Click "+ Add another garment" below.</div>';
+    return;
+  }
+  container.innerHTML = garmentRows.map((row, idx) => {
+    const tierBadge = row.detectedTier
+      ? `<span class="garment-tier-badge" style="background:${TIER_BG[row.detectedTier-1]};color:${TIER_COLORS[row.detectedTier-1]}">T${row.detectedTier} ${TIER_NAMES[row.detectedTier-1]}</span>`
+      : `<span class="garment-tier-badge" style="background:#f0ece6;color:#aaa">—</span>`;
+    return `<div class="garment-row" id="grow-${row.id}">
+      <div class="garment-num">${idx+1}</div>
+      <input type="text" class="garment-input" placeholder="e.g. Dress, Trouser, Jacket…"
+        value="${row.type}" oninput="updateGarmentField(${row.id},'type',this.value)"/>
+      <input type="text" class="garment-input" placeholder="e.g. Zimmermann, Hugo Boss…"
+        value="${row.brand}" oninput="updateGarmentField(${row.id},'brand',this.value)"/>
+      <div>${tierBadge}</div>
+      <button class="garment-del" onclick="removeGarmentRow(${row.id})">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function updateGarmentField(id, field, value){
+  const row = garmentRows.find(r=>r.id===id);
+  if(row) row[field] = value;
+}
+
+async function analyzeTier(){
+  const filled = garmentRows.filter(r=>r.brand.trim());
+  if(filled.length < 2){
+    alert('Please enter at least 2 garments with brands to analyse.');
+    return;
+  }
+  const btn = document.getElementById('tierAnalyzeBtn');
+  btn.classList.add('loading'); btn.disabled = true;
+
+  const garmentList = garmentRows
+    .filter(r=>r.brand.trim())
+    .map((r,i)=>`${i+1}. ${r.type||'Garment'}: ${r.brand}`)
+    .join('\n');
+
+  const mults = tierMultipliers;
+
+  try{
+    const prompt = `You are an expert in Australian fashion and homewares retail pricing. Analyse the following garments and their brands to determine which replacement tier each belongs to, then calculate an overall weighted tier recommendation.
+
+AUSTRALIAN MARKET TIER DEFINITIONS:
+- T1 Budget (×${mults.t1}): Kmart, Big W, Target, Aldi, H&M, Shein AU, Temu, Best&Less, Cotton On, Rivers, Lowes, Jay Jays
+- T2 Economy (×${mults.t2}): Uniqlo, Bonds, Jeanswest, Myer Own Label, Rockmans, Millers, Van Heusen, Bambury, Canningvale, Crossroads, Sussan, Beme
+- T3 Mid-Range (×${mults.t3}): Country Road, Witchery, Sportscraft, Sheridan, Seafolly, Kathmandu, Assembly Label, Seed Heritage, Saba, Oxford, MJ Bale, Politix, Trenery, Jac+Jack
+- T4 Premium (×${mults.t4}): Zimmermann, Hugo Boss, Calvin Klein, Polo Ralph Lauren, Baksana, Lululemon, Coach, Rebecca Vallance, Aje, Bec & Bridge, Manning Cartell, Tommy Hilfiger, Scanlan Theodore, Veronika Maine, P.E Nation, The Upside, Sheridan Luxury
+- T5 Luxury (×${mults.t5}): Carla Zampatti, Frette, Loro Piana, Moncler, Hermes, Paolo Sebastian, Maticevski, Brunello Cucinelli, The Row, Max Mara, Acne Studios, Zimmermann (top-end), Burberry, Camilla (top), Alex Perry, Matouk, Sferra, Pratesi
+
+GARMENTS TO ANALYSE:
+${garmentList}
+
+Return ONLY a valid JSON object (no markdown, no explanation):
+{
+  "items": [
+    {"index": 1, "type": "Dress", "brand": "Zimmermann", "tier": 4, "confidence": "high", "reason": "Australian premium designer"},
+    ...one entry per garment...
+  ],
+  "overall": {
+    "recommended_tier": 3,
+    "tier_name": "Mid-Range",
+    "confidence": "high",
+    "tier_scores": {"t1": 5, "t2": 15, "t3": 45, "t4": 30, "t5": 5},
+    "reasoning": "Brief 1-2 sentence explanation of the recommendation",
+    "min_tier": 2,
+    "max_tier": 4
+  }
+}
+
+tier_scores must sum to 100. recommended_tier is 1-5. confidence is "low", "medium", or "high".`;
+
+    const text = await callAI(prompt, 2000);
+    const clean = text.replace(/```json|```/g,'').trim();
+    const result = JSON.parse(clean);
+
+    // Update detected tiers on each row
+    if(result.items){
+      result.items.forEach(item=>{
+        const row = garmentRows.find((_,i)=>i===item.index-1);
+        if(row) row.detectedTier = item.tier;
+      });
+      renderGarmentRows();
+    }
+    renderTierResult(result, filled.length);
+  }catch(err){
+    document.getElementById('tierResultBody').innerHTML=`
+      <div style="padding:20px;text-align:center;color:var(--danger)">
+        <div style="font-size:1.5rem;margin-bottom:8px">⚠️</div>
+        <div style="font-weight:700;margin-bottom:6px">Analysis failed</div>
+        <div style="font-size:.78rem;color:var(--muted)">${err.message}</div>
+      </div>`;
+  }finally{
+    btn.classList.remove('loading'); btn.disabled = false;
+  }
+}
+
+function renderTierResult(result, count){
+  const o = result.overall;
+  const t = o.recommended_tier;
+  const col = TIER_COLORS[t-1];
+  const bg  = TIER_BG[t-1];
+  const scores = o.tier_scores||{t1:0,t2:0,t3:0,t4:0,t5:0};
+  const confEmoji = o.confidence==='high'?'🟢':o.confidence==='medium'?'🟡':'🔴';
+  const tierValues = [scores.t1||0, scores.t2||0, scores.t3||0, scores.t4||0, scores.t5||0];
+  const maxScore = Math.max(...tierValues, 1);
+
+  const barsHtml = tierValues.map((s,i)=>`
+    <div class="tier-bar-row">
+      <div class="tbr-label" style="color:${TIER_COLORS[i]}">T${i+1} ${TIER_NAMES[i]}</div>
+      <div class="tbr-track">
+        <div class="tbr-fill" style="width:${(s/maxScore*100).toFixed(0)}%;background:${TIER_COLORS[i]}"></div>
+      </div>
+      <div class="tbr-pct">${s}%</div>
+    </div>`).join('');
+
+  // Per-item list
+  const itemsHtml = (result.items||[]).map(item=>`
+    <div class="tgl-row">
+      <span>
+        <span class="tgl-name">${item.type||'Item'}</span>
+        <span class="tgl-brand"> — ${item.brand}</span>
+      </span>
+      <span class="garment-tier-badge" style="background:${TIER_BG[(item.tier||1)-1]};color:${TIER_COLORS[(item.tier||1)-1]};font-size:.65rem;padding:2px 8px;border-radius:10px;font-weight:700">
+        T${item.tier} ${TIER_NAMES[(item.tier||1)-1]}
+      </span>
+    </div>`).join('');
+
+  document.getElementById('tierResultBody').innerHTML = `
+    <div class="tier-result-big" style="background:${bg};border:2px solid ${col}">
+      <div class="trb-label" style="color:${col}">Recommended Replacement Tier</div>
+      <div class="trb-tier" style="color:${col}">T${t}</div>
+      <div class="trb-name" style="color:${col}">${o.tier_name||TIER_NAMES[t-1]}</div>
+      <div class="trb-conf">${confEmoji} ${o.confidence||'—'} confidence · ${count} garments analysed</div>
+      ${o.min_tier&&o.max_tier?`<div style="font-size:.68rem;margin-top:6px;color:${col};opacity:.8">Range: T${o.min_tier}–T${o.max_tier} across wardrobe</div>`:''}
+    </div>
+
+    <div style="font-size:.8rem;color:#444;background:#f8f5ef;border-radius:6px;padding:10px 12px;margin-bottom:12px;line-height:1.55">
+      ${o.reasoning||''}
+    </div>
+
+    <div class="tier-bar-wrap">
+      <div class="tier-bar-label"><span>Tier Score Distribution</span><span>Based on ${count} garments</span></div>
+      <div class="tier-bars">${barsHtml}</div>
+    </div>
+
+    <div class="tier-garment-list">
+      <div class="tgl-head">Per-Garment Results</div>
+      ${itemsHtml}
+    </div>
+
+    <button class="tier-apply-btn" onclick="applyTierToCalculator(${t})">
+      ✅ Apply T${t} to Calculator
+    </button>`;
+}
+
+function applyTierToCalculator(tier){
+  currentTier = tier;
+  document.querySelectorAll('.tier-pill').forEach(p=>{
+    p.classList.remove('active');
+    if(parseInt(p.dataset.tier)===tier) p.classList.add('active');
+  });
+  showPage('calc', document.querySelector('.nav-btn'));
+  document.querySelector('.nav-btn').classList.add('active');
+  renderItems();
+  // flash confirmation
+  setTimeout(()=>alert(`T${tier} ${TIER_NAMES[tier-1]} applied to the Calculator.`), 100);
+}
+
+// ─── API KEY ─────────────────────────────────────────────────
+function saveApiKey(){
+  const key = document.getElementById('apiKeyInput').value.trim();
+  if(key && !key.startsWith('sk-ant-')){
+    if(!confirm('This doesn\'t look like an Anthropic API key (should start with sk-ant-). Save anyway?')) return;
+  }
+  AI_CONFIG.apiKey = key;
+  try{ localStorage.setItem('ccpro_api_key', key); }catch(e){}
+  renderApiKeyStatus();
+}
+
+function clearApiKey(){
+  document.getElementById('apiKeyInput').value = '';
+  AI_CONFIG.apiKey = '';
+  try{ localStorage.removeItem('ccpro_api_key'); }catch(e){}
+  renderApiKeyStatus();
+}
+
+function renderApiKeyStatus(){
+  const status = document.getElementById('apiKeyStatus');
+  if(!status) return;
+  const key = AI_CONFIG.apiKey;
+  if(key){
+    const masked = key.slice(0,10)+'•'.repeat(Math.min(16,key.length-10))+'...';
+    status.innerHTML = `<span style="color:#1B5E20">✅ API key active: <strong>${masked}</strong> — AI features enabled.</span>`;
+  } else {
+    status.innerHTML = `<span style="color:#E65100">⚠️ No API key — AI features (Tier Finder, AI pricing) are disabled.</span>`;
+  }
+}
+
+function loadApiKeyIntoAdmin(){
+  const el = document.getElementById('apiKeyInput');
+  if(el && AI_CONFIG.apiKey) el.value = AI_CONFIG.apiKey;
+  renderApiKeyStatus();
+}
+
 // ─── Init ─────────────────────────────────────────────────────
 populateCatFilter();renderItems();
 document.getElementById('jobDate').value=new Date().toISOString().slice(0,10);
+renderTierMultPreview();
+// Restore saved API key from localStorage
+try{
+  const saved = localStorage.getItem('ccpro_api_key');
+  if(saved) AI_CONFIG.apiKey = saved;
+}catch(e){}
 </script>
 </body>
 </html>
