@@ -1,0 +1,1433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>ClaimsCost Pro v4</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --ink:#0A0F1E;--navy:#0D1B35;--steel:#1A3A5C;--mid:#2C5F8A;
+  --amber:#E8A020;--amber2:#F5C842;--cream:#F5F0E8;--warm:#EAE3D6;
+  --paper:#FDFBF7;--muted:#8A8FA0;--line:#DDD6C8;
+  --good:#1B5E20;--warn:#E65100;--danger:#B71C1C;
+  --r:9px;--shadow:0 2px 14px rgba(10,15,30,.12);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'IBM Plex Sans',sans-serif;background:var(--cream);color:var(--ink);font-size:14px;line-height:1.5}
+
+/* ── Header ── */
+.site-header{background:var(--navy);border-bottom:3px solid var(--amber);padding:0 20px;display:flex;align-items:stretch;height:58px;position:sticky;top:0;z-index:200}
+.header-brand{display:flex;align-items:center;gap:10px;border-right:1px solid rgba(255,255,255,.1);padding-right:18px;margin-right:14px}
+.brand-icon{width:32px;height:32px;background:var(--amber);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.brand-text h1{font-family:'Playfair Display',serif;font-size:.95rem;font-weight:700;color:#fff}
+.brand-text p{font-size:.6rem;color:rgba(255,255,255,.4);letter-spacing:.08em;text-transform:uppercase}
+.header-nav{display:flex;align-items:center;gap:2px}
+.nav-btn{padding:0 13px;height:100%;border:none;background:none;color:rgba(255,255,255,.5);font-size:.7rem;font-weight:600;font-family:'IBM Plex Sans',sans-serif;cursor:pointer;border-bottom:3px solid transparent;transition:all .15s;letter-spacing:.04em;text-transform:uppercase}
+.nav-btn:hover{color:#fff}.nav-btn.active{color:var(--amber);border-bottom-color:var(--amber)}
+.header-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.claim-ref{font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--amber2);background:rgba(255,255,255,.06);padding:3px 9px;border-radius:5px;border:1px solid rgba(232,160,32,.3)}
+.hdr-btn{padding:5px 11px;border-radius:6px;border:none;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;font-size:.7rem;font-weight:600;transition:all .15s;white-space:nowrap}
+.hdr-save{background:var(--amber);color:var(--ink)}.hdr-save:hover{background:var(--amber2)}
+.hdr-load{background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.15)}.hdr-load:hover{background:rgba(255,255,255,.14);color:#fff}
+
+/* ── Pages ── */
+.page{display:none}.page.active{display:block}
+
+/* ── Job Bar ── */
+.job-bar{background:#fff;border-bottom:2px solid var(--line);padding:12px 20px}
+.job-bar-inner{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px}
+.jf{display:flex;flex-direction:column;gap:2px}
+.jf label{font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.jf input,.jf select{padding:5px 9px;border:1.5px solid var(--line);border-radius:6px;font-family:'IBM Plex Sans',sans-serif;font-size:.8rem;color:var(--ink);background:var(--paper);transition:border-color .15s}
+.jf input:focus,.jf select:focus{outline:none;border-color:var(--amber)}
+
+/* ── Calc layout ── */
+.calc-layout{display:grid;grid-template-columns:280px 1fr;height:calc(100vh - 58px - 82px);overflow:hidden}
+.sidebar{background:var(--navy);overflow-y:auto;padding:16px 14px 24px;display:flex;flex-direction:column;gap:14px}
+.sidebar-title{font-size:.6rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.32);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,.08)}
+
+/* Damage cards */
+.dmg-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.dmg-card{border:2px solid rgba(255,255,255,.1);border-radius:7px;padding:8px 9px;cursor:pointer;transition:all .18s;background:rgba(255,255,255,.03)}
+.dmg-card:hover{border-color:rgba(255,255,255,.25)}.dmg-card.active{background:rgba(232,160,32,.12);border-color:var(--amber)}
+.dmg-label{font-size:.66rem;font-weight:700;color:#fff;margin-bottom:1px}
+.dmg-mult{font-family:'IBM Plex Mono',monospace;font-size:.9rem;color:var(--amber2)}
+.dmg-desc{font-size:.56rem;color:rgba(255,255,255,.36);margin-top:2px;line-height:1.3}
+.dmg-card.active .dmg-desc{color:rgba(255,255,255,.56)}
+
+/* Tier pills */
+.tier-pills{display:flex;flex-direction:column;gap:4px}
+.tier-pill{display:flex;align-items:center;gap:7px;padding:7px 9px;border-radius:6px;border:1px solid rgba(255,255,255,.1);cursor:pointer;transition:all .15s;background:rgba(255,255,255,.03)}
+.tier-pill:hover{background:rgba(255,255,255,.07)}.tier-pill.active{border-color:var(--amber);background:rgba(232,160,32,.1)}
+.tier-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.tier-pill-name{font-size:.7rem;font-weight:600;color:#fff}
+.tier-pill-brands{font-size:.58rem;color:rgba(255,255,255,.36);margin-top:1px}
+.tier-pill.active .tier-pill-brands{color:rgba(255,255,255,.56)}
+
+/* Overhead inputs */
+.oh-field{margin-bottom:7px}
+.oh-label{font-size:.6rem;font-weight:600;color:rgba(255,255,255,.4);letter-spacing:.05em;text-transform:uppercase;margin-bottom:2px}
+.oh-input-row{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.s-input{width:100%;padding:5px 7px;border-radius:5px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#fff;font-family:'IBM Plex Sans',sans-serif;font-size:.78rem;transition:border-color .15s}
+.s-input:focus{outline:none;border-color:var(--amber)}.s-input option{background:var(--navy)}
+
+.calc-btn{width:100%;padding:9px;border:none;border-radius:7px;font-family:'IBM Plex Sans',sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;transition:all .18s;letter-spacing:.05em;text-transform:uppercase;margin-top:2px}
+.calc-btn.primary{background:var(--amber);color:var(--ink)}.calc-btn.primary:hover{background:var(--amber2)}
+.calc-btn.ghost{background:rgba(255,255,255,.06);color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.12)}.calc-btn.ghost:hover{background:rgba(255,255,255,.1);color:#fff}
+
+/* Items */
+.main-content{overflow-y:auto;display:flex;flex-direction:column}
+.items-area{padding:16px 20px;flex:1}
+.items-header{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.items-header h2{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:600}
+.item-count-badge{background:var(--navy);color:var(--amber2);font-family:'IBM Plex Mono',monospace;font-size:.67rem;padding:2px 8px;border-radius:16px}
+.search-row{display:flex;gap:7px;margin-bottom:12px}
+.item-search{flex:1;padding:7px 11px;border:2px solid var(--line);border-radius:7px;font-family:'IBM Plex Sans',sans-serif;font-size:.82rem;color:var(--ink);background:#fff;transition:border-color .15s}
+.item-search:focus{outline:none;border-color:var(--mid)}
+.cat-filter{padding:7px 11px;border:2px solid var(--line);border-radius:7px;font-family:'IBM Plex Sans',sans-serif;font-size:.79rem;color:var(--ink);background:#fff;cursor:pointer;min-width:150px}
+.cat-group{margin-bottom:18px}
+.cat-heading{font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding:4px 7px;background:var(--warm);border-radius:4px;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.cat-count{background:var(--line);border-radius:9px;padding:1px 5px;font-size:.56rem}
+.item-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(195px,1fr));gap:5px}
+.item-card{background:#fff;border:2px solid var(--line);border-radius:7px;padding:8px 9px;transition:all .15s}
+.item-card:hover{border-color:var(--mid);box-shadow:var(--shadow)}.item-card.has-qty{border-color:var(--amber);background:#FFFBF0}
+.item-name{font-size:.73rem;font-weight:600;color:var(--ink);margin-bottom:4px;line-height:1.3}
+.item-meta{display:flex;gap:5px;margin-bottom:6px;flex-wrap:wrap}
+.item-price-tag{font-family:'IBM Plex Mono',monospace;font-size:.62rem;background:var(--warm);padding:2px 5px;border-radius:3px;color:var(--steel)}
+.item-restore-tag{font-family:'IBM Plex Mono',monospace;font-size:.62rem;background:#E8F5E9;padding:2px 5px;border-radius:3px;color:#2E7D32}
+.qty-row{display:flex;align-items:center;gap:4px}
+.qty-minus,.qty-plus{width:22px;height:22px;border:none;border-radius:4px;cursor:pointer;font-size:.95rem;font-weight:700;display:flex;align-items:center;justify-content:center;transition:all .12s}
+.qty-minus{background:var(--warm);color:var(--muted)}.qty-minus:hover{background:#f8d7da;color:var(--danger)}
+.qty-plus{background:var(--navy);color:var(--amber2)}.qty-plus:hover{background:var(--steel)}
+.qty-field{flex:1;text-align:center;padding:3px;border:1px solid var(--line);border-radius:4px;font-family:'IBM Plex Mono',monospace;font-size:.82rem;font-weight:600;color:var(--ink);min-width:0}
+.qty-field:focus{outline:none;border-color:var(--amber)}
+
+/* Results */
+.results-zone{background:var(--paper);border-top:2px solid var(--line);padding:20px}
+.report-actions{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap}
+.rpt-btn{padding:9px 16px;border:none;border-radius:7px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;font-size:.78rem;font-weight:700;transition:all .15s;display:flex;align-items:center;gap:6px}
+.rpt-btn.excel{background:#217346;color:#fff}.rpt-btn.excel:hover{background:#1a5c38}
+.rpt-btn.pdf{background:#C62828;color:#fff}.rpt-btn.pdf:hover{background:#a31e1e}
+.rpt-btn.brands{background:var(--steel);color:#fff}.rpt-btn.brands:hover{background:var(--mid)}
+
+.report-header{background:var(--navy);color:#fff;border-radius:9px;padding:16px 20px;margin-bottom:16px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.rh-field{display:flex;flex-direction:column;gap:1px}
+.rh-label{font-size:.58rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.4)}
+.rh-value{font-size:.8rem;font-weight:600;color:#fff}.rh-value.mono{font-family:'IBM Plex Mono',monospace;color:var(--amber2)}
+
+.claim-bar{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--line);border-radius:9px;overflow:hidden;margin-bottom:18px;box-shadow:var(--shadow)}
+.claim-cell{background:#fff;padding:12px 14px}
+.claim-cell-label{font-size:.58rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+.claim-cell-value{font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:700;color:var(--ink)}
+.claim-cell-sub{font-size:.62rem;color:var(--muted)}
+.claim-cell.highlight{background:var(--navy)}
+.claim-cell.highlight .claim-cell-label{color:rgba(255,255,255,.5)}
+.claim-cell.highlight .claim-cell-value{color:var(--amber2)}
+.claim-cell.highlight .claim-cell-sub{color:rgba(255,255,255,.4)}
+
+.ratio-track{height:24px;background:#E8ECF0;border-radius:12px;overflow:hidden;position:relative;box-shadow:inset 0 2px 4px rgba(0,0,0,.06);margin-bottom:6px}
+.ratio-fill{height:100%;border-radius:12px;transition:width .6s cubic-bezier(.4,0,.2,1);display:flex;align-items:center;padding:0 10px;font-family:'IBM Plex Mono',monospace;font-size:.72rem;font-weight:600;color:#fff;white-space:nowrap}
+.ratio-legend{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.ratio-legend-item{display:flex;align-items:center;gap:4px;font-size:.62rem;color:var(--muted)}
+.rl-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+
+.verdict-strip{border-radius:8px;padding:12px 16px;display:flex;gap:10px;align-items:flex-start;margin-bottom:16px;border:2px solid}
+.verdict-strip.green{background:#E8F5E9;border-color:#4CAF50}
+.verdict-strip.amber{background:#FFF8E1;border-color:#FFC107}
+.verdict-strip.red{background:#FFEBEE;border-color:#EF5350}
+.verdict-icon{font-size:1.4rem;line-height:1;flex-shrink:0}
+.verdict-head{font-weight:700;font-size:.88rem;margin-bottom:2px}
+.verdict-body{font-size:.75rem;color:#555;line-height:1.5}
+
+.oh-breakdown-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.oh-breakdown-card{background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+.oh-breakdown-card h4{font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.oh-line{display:flex;justify-content:space-between;padding:3px 0;font-size:.74rem;border-bottom:1px solid #f0ebe2}
+.oh-line:last-child{border-bottom:none;font-weight:700}
+.oh-line .ohl{color:var(--muted)}.oh-line .ohv{font-family:'IBM Plex Mono',monospace;font-weight:500}
+
+.table-wrap{overflow-x:auto;border-radius:8px;border:1px solid var(--line);background:#fff}
+.breakdown-tbl{width:100%;border-collapse:collapse;font-size:.74rem}
+.breakdown-tbl th{background:var(--navy);color:#fff;padding:8px 11px;text-align:left;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;font-weight:600;white-space:nowrap}
+.breakdown-tbl th.r{text-align:right}
+.breakdown-tbl td{padding:6px 11px;border-bottom:1px solid #f0ebe2}
+.breakdown-tbl td.r{text-align:right;font-family:'IBM Plex Mono',monospace;font-weight:500}
+.breakdown-tbl tr:last-child td{border-bottom:none}
+.breakdown-tbl tr.cat-row td{background:var(--warm);font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:4px 11px}
+.breakdown-tbl tr.total-row td{background:var(--navy);color:#fff;font-weight:700}
+.breakdown-tbl tr.total-row td.r{color:var(--amber2)}
+.breakdown-tbl tr:hover:not(.cat-row):not(.total-row) td{background:#faf6ef}
+.pct-cell{display:flex;align-items:center;gap:4px;justify-content:flex-end}
+.pct-bar-mini{height:5px;border-radius:2px;min-width:3px}
+
+/* Brands page */
+.brands-layout{padding:20px;max-width:1400px;margin:0 auto}
+.brands-header{margin-bottom:16px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.brands-header h2{font-family:'Playfair Display',serif;font-size:1.3rem}
+.brands-header p{color:var(--muted);font-size:.8rem;margin-top:2px}
+.brands-top-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.brands-search{flex:1;min-width:160px;padding:8px 12px;border:2px solid var(--line);border-radius:8px;font-family:'IBM Plex Sans',sans-serif;font-size:.83rem}
+.brands-search:focus{outline:none;border-color:var(--mid)}
+.export-btn{padding:8px 14px;border:none;border-radius:7px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;font-size:.76rem;font-weight:700;transition:all .15s;display:flex;align-items:center;gap:5px;white-space:nowrap}
+.export-btn.green{background:#217346;color:#fff}.export-btn.green:hover{background:#1a5c38}
+.export-btn.blue{background:var(--steel);color:#fff}.export-btn.blue:hover{background:var(--mid)}
+.brands-tbl-wrap{overflow-x:auto;border-radius:9px;border:1px solid var(--line);background:#fff}
+.brands-tbl{width:100%;border-collapse:collapse;font-size:.74rem}
+.brands-tbl th{background:var(--navy);color:#fff;padding:9px 12px;text-align:left;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;font-weight:600;white-space:nowrap;position:sticky;top:0;z-index:1}
+.brands-tbl td{padding:6px 10px;border-bottom:1px solid #f0ebe2;vertical-align:top;max-width:200px}
+.brands-tbl tr:hover td{background:#faf6ef}
+.brands-tbl tr.cat-row td{background:var(--warm);font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:4px 10px}
+
+/* Admin page */
+.admin-layout{padding:20px;max-width:1200px;margin:0 auto}
+.admin-header{margin-bottom:18px}
+.admin-header h2{font-family:'Playfair Display',serif;font-size:1.3rem;margin-bottom:3px}
+.admin-header p{color:var(--muted);font-size:.8rem}
+.admin-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:900px){.admin-grid{grid-template-columns:1fr}}
+.admin-card{background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:0}
+.admin-card-head{padding:12px 16px;border-bottom:2px solid var(--warm);display:flex;align-items:center;justify-content:space-between}
+.admin-card-head h3{font-size:.82rem;font-weight:700}
+.admin-card-body{padding:16px}
+.admin-tbl{width:100%;border-collapse:collapse;font-size:.76rem}
+.admin-tbl th{background:var(--warm);padding:6px 9px;text-align:left;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.admin-tbl td{padding:4px 6px;border-bottom:1px solid var(--line);vertical-align:middle}
+.admin-tbl tr:last-child td{border-bottom:none}.admin-tbl tr:hover td{background:#faf6ef}
+.edit-input{width:100%;padding:4px 6px;border:1px solid var(--line);border-radius:4px;font-family:'IBM Plex Mono',monospace;font-size:.78rem;color:var(--ink);background:#fefefe;transition:border-color .12s}
+.edit-input:focus{outline:none;border-color:var(--amber)}
+.form-group{display:flex;flex-direction:column;gap:3px}
+.form-group label{font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.form-input{padding:7px 9px;border:2px solid var(--line);border-radius:7px;font-family:'IBM Plex Sans',sans-serif;font-size:.8rem;color:var(--ink);background:#fff;transition:border-color .15s;width:100%}
+.form-input:focus{outline:none;border-color:var(--mid)}
+.btn-sm{padding:6px 12px;border:none;border-radius:6px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;font-size:.76rem;font-weight:600;transition:all .15s}
+.btn-add{background:var(--navy);color:#fff}.btn-add:hover{background:var(--steel)}
+.btn-del{background:#FFEBEE;color:var(--danger);padding:3px 7px;font-size:.68rem;border:none;border-radius:4px;cursor:pointer}.btn-del:hover{background:#FFCDD2}
+.btn-save-all{background:var(--amber);color:var(--ink)}.btn-save-all:hover{background:var(--amber2)}
+.btn-ai{background:linear-gradient(135deg,#6A1B9A,#1565C0);color:#fff;display:flex;align-items:center;gap:6px;padding:8px 16px;border:none;border-radius:7px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;font-size:.78rem;font-weight:700;transition:all .15s;width:100%;justify-content:center;margin-top:8px}
+.btn-ai:hover{opacity:.9}.btn-ai:disabled{opacity:.5;cursor:wait}
+.btn-ai .spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top:2px solid #fff;border-radius:50%;animation:spin .7s linear infinite;display:none}
+.btn-ai.loading .spinner{display:block}.btn-ai.loading .ai-label{display:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ai-result-box{background:#F3E5F5;border:1px solid #7B1FA2;border-radius:7px;padding:10px 12px;margin-top:10px;font-size:.76rem;display:none}
+.ai-result-box.show{display:block}
+.multiplier-table{width:100%;border-collapse:collapse;font-size:.79rem}
+.multiplier-table th{background:var(--warm);padding:8px 11px;text-align:left;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.multiplier-table td{padding:8px 11px;border-bottom:1px solid var(--line)}
+.dmg-badge{display:inline-block;padding:2px 8px;border-radius:16px;font-size:.68rem;font-weight:700}
+.notice{background:#E3F2FD;border-left:4px solid var(--mid);padding:9px 12px;border-radius:0 6px 6px 0;font-size:.77rem;color:var(--steel);margin-top:12px;line-height:1.55}
+.flex-gap{display:flex;gap:6px}
+.empty{text-align:center;padding:32px;color:var(--muted);font-size:.83rem}
+.scroll-x{overflow-x:auto}
+
+/* OH rates admin */
+.oh-rates-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.oh-rate-field{display:flex;flex-direction:column;gap:3px}
+.oh-rate-label{font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.oh-rate-input{padding:5px 8px;border:1.5px solid var(--line);border-radius:6px;font-family:'IBM Plex Mono',monospace;font-size:.8rem;color:var(--ink);background:#fefefe;width:100%}
+.oh-rate-input:focus{outline:none;border-color:var(--amber)}
+
+/* Save modal */
+.modal-backdrop{position:fixed;inset:0;background:rgba(10,15,30,.6);z-index:1000;display:none;align-items:center;justify-content:center}
+.modal-backdrop.open{display:flex}
+.modal{background:#fff;border-radius:12px;padding:24px;max-width:460px;width:90%;box-shadow:0 8px 40px rgba(10,15,30,.22)}
+.modal h3{font-family:'Playfair Display',serif;font-size:1.1rem;margin-bottom:6px}
+.modal p{font-size:.8rem;color:var(--muted);margin-bottom:16px;line-height:1.55}
+.modal-actions{display:flex;gap:8px;flex-wrap:wrap}
+.modal-btn{padding:9px 18px;border:none;border-radius:7px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;font-size:.82rem;font-weight:600;transition:all .15s}
+.modal-btn.amber{background:var(--amber);color:var(--ink)}.modal-btn.ghost{background:var(--warm);color:var(--ink)}
+.onedrive-box{background:#f0f8ff;border:2px solid #0078d4;border-radius:8px;padding:12px 14px;margin-top:12px;font-size:.78rem}
+.onedrive-box h4{color:#0078d4;font-size:.8rem;margin-bottom:5px}
+.onedrive-box ol{padding-left:16px;color:#444;line-height:1.8}
+.onedrive-box li{font-size:.75rem}
+
+@media print{
+  .site-header,.job-bar,.sidebar,.items-area,.search-row,.report-actions{display:none!important}
+  .calc-layout{display:block}.main-content{overflow:visible;height:auto}
+  .results-zone{padding:6px;border:none}.page{display:block!important}
+  body{background:#fff}
+}
+</style>
+</head>
+<body>
+
+<!-- ══ HEADER ══ -->
+<header class="site-header">
+  <div class="header-brand">
+    <div class="brand-icon">🧺</div>
+    <div class="brand-text">
+      <h1>ClaimsCost Pro <span style="font-size:.65rem;color:var(--amber2)">v4</span></h1>
+      <p>Restoration · AU Market 2025–26</p>
+    </div>
+  </div>
+  <nav class="header-nav">
+    <button class="nav-btn active" onclick="showPage('calc',this)">⚡ Calculator</button>
+    <button class="nav-btn" onclick="showPage('brands',this)">🏷️ Brands</button>
+    <button class="nav-btn" onclick="showPage('admin',this)">⚙️ Manage</button>
+  </nav>
+  <div class="header-right">
+    <div class="claim-ref" id="claimRefDisp">New Job</div>
+    <button class="hdr-btn hdr-load" onclick="triggerLoad()">📂 Load Job</button>
+    <button class="hdr-btn hdr-save" onclick="showSaveModal()">💾 Save Job</button>
+    <input type="file" id="loadFileInput" accept=".json" style="display:none" onchange="loadJobFile(event)"/>
+  </div>
+</header>
+
+<!-- ══ JOB BAR ══ -->
+<div class="job-bar" id="jobBar">
+  <div class="job-bar-inner">
+    <div class="jf"><label>Job Name</label><input type="text" id="jobName" placeholder="e.g. Smith Residence Fire" oninput="updateRef()"/></div>
+    <div class="jf"><label>Customer Name</label><input type="text" id="custName" placeholder="Jane Smith"/></div>
+    <div class="jf"><label>Address</label><input type="text" id="custAddr" placeholder="123 Example St, Melbourne VIC"/></div>
+    <div class="jf"><label>Claim Number</label><input type="text" id="claimNum" placeholder="CLM-2025-0001" oninput="updateRef()"/></div>
+    <div class="jf"><label>Internal Job #</label><input type="text" id="jobNum" placeholder="JOB-0042" oninput="updateRef()"/></div>
+    <div class="jf"><label>Client</label><input type="text" id="insurer" placeholder="Allianz / Crawford & Co"/></div>
+    <div class="jf"><label>Date of Loss</label><input type="date" id="dateOfLoss"/></div>
+    <div class="jf"><label>Job Date</label><input type="date" id="jobDate"/></div>
+    <div class="jf"><label>Assessor Name</label><input type="text" id="assessorName" placeholder="Your name"/></div>
+  </div>
+</div>
+
+<!-- ══ PAGE: CALCULATOR ══ -->
+<div class="page active" id="page-calc">
+<div class="calc-layout">
+  <aside class="sidebar">
+    <div>
+      <div class="sidebar-title">1 · Damage Type</div>
+      <div class="dmg-grid">
+        <div class="dmg-card active" data-mult="1.00" data-code="STD" onclick="selectDmg(this)"><div class="dmg-label">Standard</div><div class="dmg-mult">×1.00</div><div class="dmg-desc">Basic mould, builders dust, very light smoke</div></div>
+        <div class="dmg-card" data-mult="1.10" data-code="WET" onclick="selectDmg(this)"><div class="dmg-label">Water / Wet</div><div class="dmg-mult">×1.10</div><div class="dmg-desc">Urgent drying, wet damage treatment</div></div>
+        <div class="dmg-card" data-mult="1.25" data-code="FIRE" onclick="selectDmg(this)"><div class="dmg-label">Medium Fire</div><div class="dmg-mult">×1.25</div><div class="dmg-desc">Smoke, soot, moderate heat exposure</div></div>
+        <div class="dmg-card" data-mult="1.35" data-code="MOLD" onclick="selectDmg(this)"><div class="dmg-label">Heavy Mould</div><div class="dmg-mult">×1.35</div><div class="dmg-desc">Severe mould, full remediation needed</div></div>
+      </div>
+    </div>
+    <div>
+      <div class="sidebar-title">2 · Replacement Tier</div>
+      <div class="tier-pills">
+        <div class="tier-pill active" data-tier="1" onclick="selectTier(this)"><div class="tier-dot" style="background:#388E3C"></div><div><div class="tier-pill-name">T1 — Budget</div><div class="tier-pill-brands">Kmart, Big W, Target, H&M</div></div></div>
+        <div class="tier-pill" data-tier="2" onclick="selectTier(this)"><div class="tier-dot" style="background:#F57F17"></div><div><div class="tier-pill-name">T2 — Economy</div><div class="tier-pill-brands">Uniqlo, Jeanswest, Bonds, Myer</div></div></div>
+        <div class="tier-pill" data-tier="3" onclick="selectTier(this)"><div class="tier-dot" style="background:#D84315"></div><div><div class="tier-pill-name">T3 — Mid-Range</div><div class="tier-pill-brands">Country Road, Sheridan, Witchery</div></div></div>
+        <div class="tier-pill" data-tier="4" onclick="selectTier(this)"><div class="tier-dot" style="background:#6A1B9A"></div><div><div class="tier-pill-name">T4 — Premium</div><div class="tier-pill-brands">Zimmermann, Hugo Boss, Baksana</div></div></div>
+        <div class="tier-pill" data-tier="5" onclick="selectTier(this)"><div class="tier-dot" style="background:#0D47A1"></div><div><div class="tier-pill-name">T5 — Luxury</div><div class="tier-pill-brands">Carla Zampatti, Frette, Loro Piana</div></div></div>
+      </div>
+    </div>
+    <div>
+      <div class="sidebar-title">3 · Job Overheads</div>
+      <div class="oh-field"><div class="oh-label">Vehicle</div><select class="s-input" id="vehicleType"><option value="0">None / own vehicle</option><option value="65">Small Van ($65/hr)</option><option value="95">Truck 1–4t ($95/hr)</option><option value="130">Truck 4t+ ($130/hr)</option></select></div>
+      <div class="oh-field"><div class="oh-input-row"><div><div class="oh-label">Trans hrs</div><input type="number" class="s-input" id="transHrs" value="0" min="0" step="0.5"/></div><div><div class="oh-label">Fuel ($)</div><input type="number" class="s-input" id="fuel" value="25" min="0"/></div></div></div>
+      <div class="oh-field"><div class="oh-input-row"><div><div class="oh-label">Tolls ($)</div><input type="number" class="s-input" id="tolls" value="0" min="0"/></div><div><div class="oh-label">Site rate</div><select class="s-input" id="siteRate"><option value="75">$75/hr Std</option><option value="110">$110/hr Spec</option><option value="130">$130/hr WE</option></select></div></div></div>
+      <div class="oh-field"><div class="oh-input-row"><div><div class="oh-label">Site hrs</div><input type="number" class="s-input" id="siteHrs" value="1" min="0" step="0.5"/></div><div><div class="oh-label">Packaging ($)</div><input type="number" class="s-input" id="pkgTotal" value="0" min="0"/></div></div></div>
+      <div class="oh-field"><div class="oh-input-row"><div><div class="oh-label">Admin ($)</div><input type="number" class="s-input" id="admin" value="40" min="0"/></div><div><div class="oh-label">Storage ($)</div><input type="number" class="s-input" id="storage" value="0" min="0"/></div></div></div>
+      <div class="oh-field"><div class="oh-input-row"><div><div class="oh-label">Insurance ($)</div><input type="number" class="s-input" id="insurance" value="0" min="0"/></div><div><div class="oh-label">Other ($)</div><input type="number" class="s-input" id="otherOH" value="0" min="0"/></div></div></div>
+    </div>
+    <button class="calc-btn primary" onclick="calculate()">▶ Generate Report</button>
+    <button class="calc-btn ghost" onclick="clearAll()">✕ Clear All Items</button>
+    <button class="calc-btn ghost" onclick="exportReportPDF()">🖨 Print / PDF</button>
+  </aside>
+  <main class="main-content">
+    <div class="items-area">
+      <div class="items-header"><h2>Select Items &amp; Quantities</h2><span class="item-count-badge" id="totalItemBadge">0 items</span></div>
+      <div class="search-row">
+        <input type="text" class="item-search" id="itemSearch" placeholder="Search items…" oninput="filterItems()"/>
+        <select class="cat-filter" id="catFilter" onchange="filterItems()"><option value="">All Categories</option></select>
+      </div>
+      <div id="itemsContainer"></div>
+    </div>
+    <div class="results-zone" id="resultsZone" style="display:none"></div>
+  </main>
+</div>
+</div>
+
+<!-- ══ PAGE: BRANDS ══ -->
+<div class="page" id="page-brands">
+<div class="brands-layout">
+  <div class="brands-header">
+    <div><h2>Brand Comparison Reference</h2><p>10 comparable Australian-market brands per item across all 5 replacement tiers.</p></div>
+  </div>
+  <div class="brands-top-row">
+    <input type="text" class="brands-search" id="brandsSearch" placeholder="Search items or brands…" oninput="renderBrandsTable()"/>
+    <button class="export-btn green" onclick="exportBrandsExcel()">📊 Export All Brands (Excel)</button>
+    <button class="export-btn blue" onclick="exportBrandsCSV()">📄 Export All Brands (CSV)</button>
+  </div>
+  <div class="brands-tbl-wrap">
+    <table class="brands-tbl">
+      <thead><tr>
+        <th>Category</th><th>Item</th>
+        <th style="background:#2E7D32">T1 Budget</th>
+        <th style="background:#BF6F00">T2 Economy</th>
+        <th style="background:#BF360C">T3 Mid-Range</th>
+        <th style="background:#4A148C">T4 Premium</th>
+        <th style="background:#0D47A1">T5 Luxury</th>
+      </tr></thead>
+      <tbody id="brandsTblBody"></tbody>
+    </table>
+  </div>
+</div>
+</div>
+
+<!-- ══ PAGE: ADMIN ══ -->
+<div class="page" id="page-admin">
+<div class="admin-layout">
+  <div class="admin-header"><h2>Manage Items &amp; Pricing</h2><p>Edit restoration base prices, replacement costs, overhead rates, damage multipliers, and add or remove items.</p></div>
+  <div class="admin-grid">
+
+    <!-- Multipliers -->
+    <div class="admin-card">
+      <div class="admin-card-head"><h3>Damage Multipliers</h3></div>
+      <div class="admin-card-body">
+        <table class="multiplier-table">
+          <thead><tr><th>Type</th><th>Multiplier</th><th>Scope</th></tr></thead>
+          <tbody>
+            <tr><td><span class="dmg-badge" style="background:#E8F5E9;color:#2E7D32">Standard</span></td><td><input class="edit-input" id="mult_STD" value="1.00" type="number" step="0.01" min="1" style="width:70px"/></td><td style="font-size:.71rem;color:var(--muted)">Basic mould, builders dust, very light smoke</td></tr>
+            <tr><td><span class="dmg-badge" style="background:#E3F2FD;color:#1565C0">Water/Wet</span></td><td><input class="edit-input" id="mult_WET" value="1.10" type="number" step="0.01" min="1" style="width:70px"/></td><td style="font-size:.71rem;color:var(--muted)">Urgent drying, wet damage treatment</td></tr>
+            <tr><td><span class="dmg-badge" style="background:#FBE9E7;color:#BF360C">Med. Fire</span></td><td><input class="edit-input" id="mult_FIRE" value="1.25" type="number" step="0.01" min="1" style="width:70px"/></td><td style="font-size:.71rem;color:var(--muted)">Smoke, soot, moderate heat exposure</td></tr>
+            <tr><td><span class="dmg-badge" style="background:#F3E5F5;color:#4A148C">Hvy Mould</span></td><td><input class="edit-input" id="mult_MOLD" value="1.35" type="number" step="0.01" min="1" style="width:70px"/></td><td style="font-size:.71rem;color:var(--muted)">Severe mould, full remediation needed</td></tr>
+          </tbody>
+        </table>
+        <div style="margin-top:12px;"><button class="btn-sm btn-save-all" onclick="saveMultipliers()">Save Multipliers</button></div>
+      </div>
+    </div>
+
+    <!-- Overhead Rates -->
+    <div class="admin-card">
+      <div class="admin-card-head"><h3>Overhead Rates (Defaults)</h3></div>
+      <div class="admin-card-body">
+        <div class="oh-rates-grid">
+          <div class="oh-rate-field"><div class="oh-rate-label">Small Van ($/hr)</div><input type="number" class="oh-rate-input" id="rate_van" value="65" min="0" step="0.5"/></div>
+          <div class="oh-rate-field"><div class="oh-rate-label">Truck 1–4t ($/hr)</div><input type="number" class="oh-rate-input" id="rate_truck1" value="95" min="0" step="0.5"/></div>
+          <div class="oh-rate-field"><div class="oh-rate-label">Truck 4t+ ($/hr)</div><input type="number" class="oh-rate-input" id="rate_truck2" value="130" min="0" step="0.5"/></div>
+          <div class="oh-rate-field"><div class="oh-rate-label">Site Std ($/hr)</div><input type="number" class="oh-rate-input" id="rate_site_std" value="75" min="0" step="0.5"/></div>
+          <div class="oh-rate-field"><div class="oh-rate-label">Site Specialist ($/hr)</div><input type="number" class="oh-rate-input" id="rate_site_spec" value="110" min="0" step="0.5"/></div>
+          <div class="oh-rate-field"><div class="oh-rate-label">Site Weekend ($/hr)</div><input type="number" class="oh-rate-input" id="rate_site_we" value="130" min="0" step="0.5"/></div>
+          <div class="oh-rate-field"><div class="oh-rate-label">Metro Fuel ($)</div><input type="number" class="oh-rate-input" id="rate_fuel_metro" value="25" min="0" step="0.5"/></div>
+          <div class="oh-rate-field"><div class="oh-rate-label">Regional Fuel ($)</div><input type="number" class="oh-rate-input" id="rate_fuel_reg" value="60" min="0" step="0.5"/></div>
+          <div class="oh-rate-field"><div class="oh-rate-label">Default Admin ($)</div><input type="number" class="oh-rate-input" id="rate_admin" value="40" min="0" step="0.5"/></div>
+          <div class="oh-rate-field"><div class="oh-rate-label">Min Call-out ($)</div><input type="number" class="oh-rate-input" id="rate_callout" value="120" min="0" step="0.5"/></div>
+        </div>
+        <button class="btn-sm btn-save-all" onclick="saveOHRates()">Save Rates &amp; Apply to Calculator</button>
+        <div class="notice">Saving rates updates the vehicle and site dropdown values in the Calculator sidebar. Fuel and admin defaults are also applied to new jobs.</div>
+      </div>
+    </div>
+
+    <!-- Add new item -->
+    <div class="admin-card" style="grid-column:1/-1">
+      <div class="admin-card-head"><h3>Add New Item</h3></div>
+      <div class="admin-card-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px">
+          <div class="form-group"><label>Category</label><input type="text" class="form-input" id="newCat" placeholder="Clothing – Bottoms" list="catList"/><datalist id="catList"></datalist></div>
+          <div class="form-group"><label>Item Name</label><input type="text" class="form-input" id="newName" placeholder="e.g. Cargo Pants"/></div>
+          <div class="form-group"><label>Base Restore Price ($)</label><input type="number" class="form-input" id="newRestore" placeholder="18" min="0" step="0.5"/></div>
+        </div>
+        <div style="font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Replacement Mid-Price per Tier ($AUD) — enter manually or use AI Generator below</div>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-bottom:10px">
+          <div class="form-group"><label>T1 Budget</label><input type="number" class="form-input" id="newT1" placeholder="30" min="0"/></div>
+          <div class="form-group"><label>T2 Economy</label><input type="number" class="form-input" id="newT2" placeholder="60" min="0"/></div>
+          <div class="form-group"><label>T3 Mid-Range</label><input type="number" class="form-input" id="newT3" placeholder="120" min="0"/></div>
+          <div class="form-group"><label>T4 Premium</label><input type="number" class="form-input" id="newT4" placeholder="250" min="0"/></div>
+          <div class="form-group"><label>T5 Luxury</label><input type="number" class="form-input" id="newT5" placeholder="600" min="0"/></div>
+        </div>
+        <button class="btn-ai" id="aiBtn" onclick="generateAIPricing()">
+          <div class="spinner"></div>
+          <span class="ai-label">✨ AI Generate Replacement Costs (T1–T5)</span>
+        </button>
+        <div class="ai-result-box" id="aiResultBox"></div>
+        <div style="margin-top:12px">
+          <button class="btn-sm btn-add" onclick="addItem()">+ Add Item to Calculator</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- All items table -->
+  <div class="admin-card" style="margin-top:18px">
+    <div class="admin-card-head">
+      <h3>All Items — Edit Pricing</h3>
+      <div class="flex-gap">
+        <input type="text" class="form-input" id="adminSearch" placeholder="Search…" style="width:150px;padding:5px 8px" oninput="renderAdminTable()"/>
+        <button class="btn-sm btn-save-all" onclick="saveAll()">💾 Save &amp; Apply</button>
+      </div>
+    </div>
+    <div class="admin-card-body scroll-x">
+      <table class="admin-tbl">
+        <thead><tr><th>Category</th><th>Item</th><th>Base Restore $</th><th>T1</th><th>T2</th><th>T3</th><th>T4</th><th>T5</th><th></th></tr></thead>
+        <tbody id="adminTblBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══ SAVE MODAL ══ -->
+<div class="modal-backdrop" id="saveModal">
+  <div class="modal">
+    <h3>💾 Save Job File</h3>
+    <p>All job data (details, items, quantities, overheads, pricing) saved as a <strong>.json</strong> file you can reload or store in OneDrive/SharePoint.</p>
+    <div class="modal-actions">
+      <button class="modal-btn amber" onclick="saveJobFile()">⬇ Download Job File</button>
+      <button class="modal-btn ghost" onclick="closeModal()">Cancel</button>
+    </div>
+    <div class="onedrive-box">
+      <h4>☁️ Saving to OneDrive / SharePoint</h4>
+      <ol>
+        <li>Click <strong>Download Job File</strong> above</li>
+        <li>Open <strong>OneDrive</strong> or <strong>SharePoint</strong> in your browser</li>
+        <li>Drag the downloaded .json into your <em>Claims</em> folder</li>
+        <li>To reload: download from OneDrive, then click <strong>Load Job</strong></li>
+      </ol>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  DATA — paste full items array from v3 (truncated here for brevity;
+//  in production this contains all 90+ items with full brands data)
+// ═══════════════════════════════════════════════════════════════
+let items = [
+{cat:"Clothing – Bottoms",name:"Trouser",restore:18,t1:30,t2:60,t3:115,t4:225,t5:450,brands:{t1:"Kmart, Big W, Target, Rivers, Lowes, Best&Less, Aldi, H&M, Shein AU, Temu",t2:"Jeanswest, Uniqlo, Myer Own Label, Rivers Premium, Rockmans, Millers, Crossroads, Review, Sussan, Gazman",t3:"Country Road, Witchery, Politix, Sportscraft, Trenery, Seed Heritage, Saba, Oxford, Assembly Label, MJ Bale",t4:"Calvin Klein, Hugo Boss, Tommy Hilfiger, Polo Ralph Lauren, Scanlan Theodore, Veronika Maine, Aje, Bec & Bridge, Gant, Tiger of Sweden",t5:"Carla Zampatti, Zimmermann, Camilla, Burberry, Theory, Vince, Max Mara, Loro Piana, The Row, Maticevski"}},
+{cat:"Clothing – Bottoms",name:"Trouser Silk/Delicate",restore:28,t1:55,t2:100,t3:190,t4:375,t5:750,brands:{t1:"Target, Big W, H&M, Kmart, Cotton On, Shein AU, Temu, Best&Less, Aldi, Suzanne Grae",t2:"Uniqlo, Myer Own, Jeanswest, Princess Highway, Review, Rockmans, Millers, Sussan, Crossroads, City Chic",t3:"Scanlan Theodore, Witchery, Country Road, Saba, Seed Heritage, Trenery, Sportscraft, Oxford, Jac+Jack, Assembly Label",t4:"Camilla, Zimmermann, Carla Zampatti, Rebecca Vallance, Veronika Maine, Aje, Bec & Bridge, Manning Cartell, Ginger & Smart, Sass & Bide",t5:"Zimmermann, Carla Zampatti, Maticevski, Alex Perry, Bec & Bridge top-end, Paolo Sebastian, Camilla couture, Ginger & Smart, Lover, Ae'lkemi"}},
+{cat:"Clothing – Bottoms",name:"Jeans",restore:14,t1:37,t2:75,t3:150,t4:300,t5:600,brands:{t1:"Kmart, Big W, Target, Rivers, Lowes, Best&Less, Aldi, H&M, Shein AU, Temu",t2:"Jeanswest, Myer Own, H&M, Uniqlo, Cotton On, Jay Jays, Factorie, Rivers Premium, Crossroads, Rockmans",t3:"Levi's, Mavi, Lee, Wrangler, Assembly Label, Country Road, Seed Heritage, Witchery, Saba, Industrie",t4:"G-Star, 7 For All Mankind, AG Jeans, Rag & Bone, Nobody Denim, Nudie, Edwin, Tiger of Sweden, Neuw, A.P.C.",t5:"Frame, Acne Studios, Paige, J Brand, Goldsign, Citizens of Humanity, RE/DONE, Toteme, Isabel Marant, Helmut Lang"}},
+{cat:"Clothing – Bottoms",name:"Shorts",restore:12,t1:25,t2:53,t3:100,t4:190,t5:375,brands:{t1:"Kmart, Big W, Target, Cotton On, H&M, Shein AU, Temu, Best&Less, Aldi, Jay Jays",t2:"Jeanswest, Uniqlo, Rivers, Myer Own, Review, Rockmans, Crossroads, Millers, Factorie, Sussan",t3:"Country Road, Seed Heritage, Witchery, Sportscraft, Assembly Label, Saba, Oxford, Trenery, Jac+Jack, RVCA",t4:"The Upside, P.E Nation, Aje, Bec & Bridge, Zimmermann (sale), Rebecca Vallance, Camilla, Tigerlily, Seafolly, Lululemon",t5:"Zimmermann, Camilla, Aje top-end, Scanlan Theodore, Veronika Maine, Maticevski, Ginger & Smart, Lover, Paolo Sebastian, Ae'lkemi"}},
+{cat:"Clothing – Bottoms",name:"Track Pants",restore:10,t1:30,t2:60,t3:115,t4:225,t5:450,brands:{t1:"Kmart, Big W, Target, Aldi, Cotton On, H&M, Shein AU, Temu, Best&Less, Jay Jays",t2:"Bonds, Uniqlo, H&M, Lorna Jane (entry), 2XU (entry), Puma, Adidas (entry), Reebok, Champion, Supré",t3:"Adidas, Nike, Puma, Reebok, Under Armour, RVCA, Rip Curl, Quiksilver, Roxy, Lorna Jane",t4:"The Upside, P.E Nation, Lululemon, Varley, Nimble, Outdoor Voices, Splits59, Sweaty Betty, Girlfriend Collective, Athleta",t5:"Lululemon premium, Vuori, Sweaty Betty, Alo Yoga, Nagnata, The Upside resort, Skin, Eres Active, Lucas Hugh, Falke Sport"}},
+{cat:"Clothing – Bottoms",name:"Leggings",restore:10,t1:25,t2:53,t3:110,t4:225,t5:450,brands:{t1:"Kmart, Big W, Target, Cotton On, Aldi, H&M, Shein AU, Temu, Best&Less, Jay Jays",t2:"Lorna Jane (entry), Bonds, Uniqlo, H&M, Rivers, Bras N Things, Cotton On Body, Puma, Adidas (entry), Supré",t3:"Nike, Adidas, 2XU, Puma, Reebok, Lorna Jane, RVCA, Rip Curl, Roxy, Under Armour",t4:"Lululemon, P.E Nation, The Upside, Nimble, Varley, Splits59, Sweaty Betty, Outdoor Voices, Girlfriend Collective, Athleta",t5:"Lululemon Align top, Sweaty Betty, Alo Yoga, Vuori, Nagnata, Lucas Hugh, Eres Active, Falke Sport, Skin, Zimmerli"}},
+{cat:"Clothing – Bottoms",name:"Ski Trousers",restore:30,t1:90,t2:185,t3:350,t4:625,t5:1150,brands:{t1:"Kmart, Big W, Decathlon, Aldi, Target, H&M Sport, Shein AU, Temu, Best&Less Sport, Kmart Sport",t2:"Kathmandu (sale), Mountain Designs, Roxy, Quiksilver, Columbia, O'Neill, Protest, Surfanic, Trespass, Killtec",t3:"Spyder, Salomon, Helly Hansen, O'Neill premium, Protest premium, Roxy premium, Columbia premium, Volcom, Burton, Atomic",t4:"Arc'teryx, Bogner (entry), Peak Performance, Kjus (entry), Descente, Armada, Atomic, Rossignol, Phenix, Dainese",t5:"Bogner, Kjus, Fendi Sport, Moncler Grenoble, Goldbergh, Perfect Moment, Fusalp, Dainese premium, Sportalm, Poivre Blanc"}},
+{cat:"Clothing – Bottoms",name:"Underwear – Bottoms",restore:6,t1:10,t2:23,t3:45,t4:90,t5:185,brands:{t1:"Kmart, Big W, Target, Aldi, Rivers, Shein AU, Temu, Best&Less, H&M, Cotton On Body",t2:"Bonds, Jockey, Cotton On Body, Berlei, Bras N Things, Fayreform, Hestia, Triumph, Kayser, Lovable",t3:"Calvin Klein, Tommy Hilfiger, DKNY, Pleasure State, Bendon, Najo, Lace & Day, Harlow, Chantelle (entry), Simone Perele (entry)",t4:"Hanky Panky, Chantelle, Wacoal, Elle Macpherson Intimates, Intimissimi, Simone Perele, Prima Donna, Eres, Aubade, Cosabella",t5:"Agent Provocateur, La Perla, Fleur du Mal, Carine Gilson, Lise Charmel, Eres, Myla, Yasmine Eslami, Kiki de Montparnasse, Fleur of England"}},
+{cat:"Clothing – Bottoms",name:"Socks (Pair)",restore:4,t1:5,t2:13,t3:27,t4:53,t5:110,brands:{t1:"Kmart, Big W, Target, Aldi, Rivers, Shein AU, Temu, Best&Less, H&M, Cotton On",t2:"Bonds, Puma, Adidas, Nike (entry), Champion, Roxy, Rip Curl, Quiksilver, Berlei, Hestia",t3:"Falke (entry), Happy Socks, Stance (entry), Nike premium, Adidas premium, 2XU, Lorna Jane, Ted Baker, BOSS (entry), Tommy Hilfiger",t4:"Pantherella, Falke, Tabio, Corgi, Zkano, Darn Tough, Smartwool, Icebreaker, Thought Clothing, Falke Airport",t5:"Bresciani, Sozzi, Francesco Smalto, Falke Airport premium, Pantherella Merino, Pantherella Pima, Drake's, Charvet, Simonnot-Godard, Zimmerli"}},
+{cat:"Clothing – Bottoms",name:"Ski Gloves",restore:18,t1:35,t2:75,t3:150,t4:300,t5:600,brands:{t1:"Kmart, Big W, Decathlon, Aldi, Target, H&M Sport, Shein AU, Temu, Kmart Sport, Best&Less",t2:"Kathmandu, Mountain Designs, Roxy, Quiksilver, Columbia, Protest, O'Neill, Trespass, Surfanic, Killtec",t3:"Helly Hansen, Salomon, Black Diamond (entry), Spyder, Dakine, Burton, Gordini, Level, Leki, Reusch",t4:"Arc'teryx, Hestra (entry), Black Diamond, Outdoor Research, Marmot, Mammut, Icebreaker, Dainese, Phenix, Ziener",t5:"Hestra, Bogner, Kjus, Roeckl, Black Diamond Guide, Moncler Grenoble, Fusalp, Sportalm, Dainese premium, Goldbergh"}},
+{cat:"Clothing – Tops",name:"Jacket",restore:22,t1:75,t2:150,t3:300,t4:600,t5:1400,brands:{t1:"Kmart, Big W, Target, Cotton On, H&M, Shein AU, Temu, Best&Less, Jay Jays, Factorie",t2:"Jeanswest, Uniqlo, Rivers, Myer Own, Review, Rockmans, Crossroads, Millers, Sussan, City Chic",t3:"Country Road, Witchery, Sportscraft, Saba, Trenery, Seed Heritage, Oxford, Assembly Label, MJ Bale, Politix",t4:"Calvin Klein, Hugo Boss, Tommy Hilfiger, Polo Ralph Lauren, Scanlan Theodore, Veronika Maine, Aje, Bec & Bridge, DKNY, Gant",t5:"Carla Zampatti, Zimmermann, Camilla, Burberry, Max Mara, Theory, Vince, The Row, Maticevski, Ginger & Smart"}},
+{cat:"Clothing – Tops",name:"Jacket Beaded",restore:45,t1:115,t2:225,t3:450,t4:900,t5:2100,brands:{t1:"Target, Big W, H&M, Kmart, Cotton On, Shein AU, Temu, Best&Less, Suzanne Grae, Beme",t2:"Review, Myer Own, Rockmans, Millers, Crossroads, Sussan, Beme, City Chic, Autograph, Noni B",t3:"Witchery, Country Road, Seed Heritage, Saba, Trenery, Oxford, Sportscraft, Assembly Label, Jac+Jack, Lover",t4:"Zimmermann, Rebecca Vallance, Bec & Bridge, Camilla, Aje, Manning Cartell, Sass & Bide, Ginger & Smart, Lover, Veronika Maine",t5:"Zimmermann, Camilla, Alex Perry, Maticevski, Carla Zampatti, Paolo Sebastian, Ae'lkemi, Dion Lee, Toni Maticevski, Steven Khalil"}},
+{cat:"Clothing – Tops",name:"Overcoat / Parka",restore:30,t1:90,t2:185,t3:375,t4:750,t5:2000,brands:{t1:"Kmart, Big W, Target, Cotton On, H&M, Shein AU, Temu, Best&Less, Jay Jays, Aldi",t2:"Uniqlo, Jeanswest, Rivers, Myer Own, H&M Premium, Kathmandu (sale), Columbia (sale), Cotton On, Review, Rockmans",t3:"Country Road, Sportscraft, Trenery, Kathmandu, Columbia, The North Face (entry), Seed Heritage, Oxford, Assembly Label, Witchery",t4:"Woolrich, Canada Goose (entry), Arc'teryx (entry), Hugo Boss, Tommy Hilfiger, Aje, Scanlan Theodore, Veronika Maine, Manning Cartell, Gant",t5:"Moncler, Canada Goose, Max Mara, Burberry, Moose Knuckles, Arc'teryx premium, Yves Salomon, Mackage, Toteme, The Row"}},
+{cat:"Clothing – Tops",name:"Cardigan / Jumper",restore:16,t1:32,t2:68,t3:135,t4:280,t5:590,brands:{t1:"Kmart, Big W, Target, Cotton On, H&M, Shein AU, Temu, Best&Less, Jay Jays, Aldi",t2:"Uniqlo, Jeanswest, Myer Own, Rivers, Review, Rockmans, Millers, Crossroads, Sussan, Beme",t3:"Country Road, Witchery, Sportscraft, Seed Heritage, Trenery, Oxford, Assembly Label, Saba, Jac+Jack, Trenery",t4:"Calvin Klein, Hugo Boss, Tommy Hilfiger, Polo Ralph Lauren, Scanlan Theodore, Veronika Maine, Aje, Gant, DKNY, Manning Cartell",t5:"Carla Zampatti, Zimmermann, Camilla, Theory, Vince, Loro Piana, Brunello Cucinelli, The Row, Johnstons of Elgin, Eric Bompard"}},
+{cat:"Clothing – Tops",name:"Shirt – Business",restore:12,t1:37,t2:75,t3:150,t4:300,t5:650,brands:{t1:"Kmart, Big W, Target, Rivers, Lowes, Shein AU, Temu, Best&Less, H&M, Aldi",t2:"Uniqlo, Jeanswest, Myer Own, H&M, Van Heusen, Connor, Roger David, Lowes, Rivers Premium, Gazman",t3:"Charles Tyrwhitt, Trenery, Sportscraft, Oxford, MJ Bale, Politix, Country Road, Gazman premium, Thomas Pink (AU), Van Heusen premium",t4:"Calvin Klein, Hugo Boss, Ralph Lauren, Tommy Hilfiger, Gant, Eton (entry), Ted Baker, Canali (entry), Tiger of Sweden, BOSS",t5:"Eton, Brioni, Canali, Borrelli, Boggi Milano, Charvet, Turnbull & Asser, Thomas Pink premium, Drake's, Budd Shirtmakers"}},
+{cat:"Clothing – Tops",name:"Shirt – Ladies",restore:12,t1:32,t2:68,t3:135,t4:270,t5:555,brands:{t1:"Kmart, Big W, Target, Cotton On, H&M, Shein AU, Temu, Best&Less, Jay Jays, Suzanne Grae",t2:"Jeanswest, Uniqlo, Myer Own, Rivers, Review, Rockmans, Millers, Crossroads, Sussan, Beme",t3:"Country Road, Witchery, Saba, Seed Heritage, Trenery, Oxford, Assembly Label, Jac+Jack, Sportscraft, Indie & Co",t4:"Scanlan Theodore, Veronika Maine, Rebecca Vallance, Camilla, Aje, Manning Cartell, Bec & Bridge, Ginger & Smart, DKNY, Tommy Hilfiger",t5:"Carla Zampatti, Zimmermann, Bec & Bridge, Alex Perry, Maticevski, Paolo Sebastian, Ae'lkemi, Ginger & Smart, Dion Lee, Steven Khalil"}},
+{cat:"Clothing – Tops",name:"T-Shirt",restore:8,t1:10,t2:25,t3:53,t4:110,t5:250,brands:{t1:"Kmart, Big W, Target, Cotton On, H&M, Shein AU, Temu, Best&Less, Jay Jays, Factorie",t2:"Uniqlo, Bonds, Supré, Rivers, Jeanswest, Rockmans, Millers, Cotton On Body, Crossroads, Beme",t3:"Country Road, Assembly Label, Witchery, Sportscraft, Seed Heritage, Jac+Jack, Oxford, Trenery, Indie & Co, RVCA",t4:"Tommy Hilfiger, Polo Ralph Lauren, Calvin Klein, BOSS, Scanlan Theodore, Vince, James Perse, Sunspel, Gant, Lacoste",t5:"Vince, Theory, James Perse, Sunspel, Orlebar Brown, The Row, Derek Rose, Zimmerli, Falke, Rick Owens"}},
+{cat:"Clothing – Tops",name:"Dressing Gown",restore:14,t1:32,t2:68,t3:145,t4:325,t5:725,brands:{t1:"Kmart, Big W, Target, Aldi, Cotton On, Shein AU, Temu, Best&Less, H&M Home, Jay Jays",t2:"Myer Own, Sheridan (sale), Bonds, H&M, Peter Alexander (sale), Bambury, Canningvale, Rivers, Rockmans, Sussan",t3:"Sheridan, Bambury, Baksana, Peter Alexander, Homebodii, Laura Ashley, Country Road Home, Linen House, Adairs, Papinelle",t4:"Baksana premium, Homebodii premium, Ralph Lauren Home, Hugo Boss Home, Frette (entry), Eberjey, Deshabille, Skin, Nancy Koltes (entry), Matouk",t5:"Frette, Pratesi, Baksana Heritage, Matouk, Nancy Koltes, Sferra, Rivolta Carmignani, Yves Delorme, Coyuchi, D. Porthault"}},
+{cat:"Clothing – Tops",name:"Pyjamas",restore:14,t1:32,t2:68,t3:135,t4:280,t5:590,brands:{t1:"Kmart, Big W, Target, Aldi, Cotton On, Shein AU, Temu, Best&Less, H&M, Jay Jays",t2:"Peter Alexander (sale), Myer Own, H&M, Bonds, Bras N Things, Rockmans, Millers, Sussan, Beme, Crossroads",t3:"Peter Alexander, Homebodii, Deshabille, Pip & Vine, Spell, Country Road Home, Linen House, Papinelle, Adairs, Bambury",t4:"Peter Alexander premium, Homebodii premium, Nite Nite by Jasmine, Deshabille premium, Ralph Lauren Home, Eberjey, Skin, Hugo Boss Home, Olivia Von Halle (entry), Zimmerli",t5:"Eberjey premium, Papinelle premium, Deshabille couture, Skin premium, Olivia Von Halle, Carine Gilson, Hanro, Zimmerli, Frette, D. Porthault"}},
+{cat:"Clothing – Tops",name:"Bathers",restore:14,t1:32,t2:68,t3:135,t4:280,t5:590,brands:{t1:"Kmart, Big W, Target, Cotton On, H&M, Shein AU, Temu, Best&Less, Jay Jays, Aldi",t2:"Rip Curl, Roxy, Speedo, Billabong, Seafolly (sale), Supré, Cotton On Body, Tigerlily (sale), RVCA, Quiksilver",t3:"Seafolly, Tigerlily, Jets, Suboo, One Piece AU, RVCA, Rip Curl premium, Roxy premium, Billabong premium, Piha",t4:"Zimmermann, Camilla, Aje, We Are Handsome, Bond-Eye, Matteau, Hunza G, Peony, Bec & Bridge, Tigerlily premium",t5:"Zimmermann, Camilla, Hunza G, Vilebrequin, Missoni Mare, Eres, Lisa Marie Fernandez, Mara Hoffman, Bower Swimwear, Matteau"}},
+{cat:"Clothing – Full Body",name:"Dress – Plain",restore:18,t1:40,t2:83,t3:165,t4:335,t5:700,brands:{t1:"Kmart, Big W, Target, Cotton On, H&M, Shein AU, Temu, Best&Less, Jay Jays, Suzanne Grae",t2:"Jeanswest, Uniqlo, Myer Own, Review, Rivers, Rockmans, Millers, Crossroads, Sussan, Beme",t3:"Country Road, Witchery, Saba, Seed Heritage, Trenery, Oxford, Assembly Label, Jac+Jack, Sportscraft, Indie & Co",t4:"Scanlan Theodore, Veronika Maine, Camilla, Aje, Bec & Bridge, Manning Cartell, Rebecca Vallance, Ginger & Smart, DKNY, Tommy Hilfiger",t5:"Carla Zampatti, Zimmermann, Alex Perry, Maticevski, Vince, Theory, The Row, Ae'lkemi, Dion Lee, Ginger & Smart"}},
+{cat:"Clothing – Full Body",name:"Dress – Silk/Delicate",restore:38,t1:75,t2:150,t3:300,t4:600,t5:1400,brands:{t1:"Target, H&M, Big W, Cotton On, Kmart, Shein AU, Temu, Best&Less, Suzanne Grae, Beme",t2:"Uniqlo, Review, Princess Highway, Myer Own, Rockmans, Millers, Crossroads, Sussan, City Chic, Autograph",t3:"Country Road, Witchery, Saba, Scanlan Theodore, Seed Heritage, Assembly Label, Jac+Jack, Oxford, Trenery, Sportscraft",t4:"Camilla, Zimmermann, Carla Zampatti, Rebecca Vallance, Veronika Maine, Manning Cartell, Aje, Bec & Bridge, Ginger & Smart, Sass & Bide",t5:"Zimmermann, Carla Zampatti, Bec & Bridge, Maticevski, Alex Perry, Paolo Sebastian, Ae'lkemi, Dion Lee, Steven Khalil, Ginger & Smart"}},
+{cat:"Clothing – Full Body",name:"Dress – Beaded",restore:58,t1:120,t2:240,t3:485,t4:975,t5:2400,brands:{t1:"Target, Big W, H&M, Kmart, Cotton On, Shein AU, Temu, Best&Less, Suzanne Grae, Beme",t2:"Review, Myer Own, Rockmans, Millers, Crossroads, Sussan, Beme, City Chic, Autograph, Noni B",t3:"Witchery, Country Road, Saba, Trenery, Seed Heritage, Assembly Label, Oxford, Sportscraft, Jac+Jack, Lover",t4:"Zimmermann, Rebecca Vallance, Bec & Bridge, Camilla, Aje, Manning Cartell, Sass & Bide, Ginger & Smart, Veronika Maine, Lover",t5:"Zimmermann, Camilla, Alex Perry, Maticevski, Carla Zampatti, Paolo Sebastian, Ae'lkemi, Dion Lee, Steven Khalil, Toni Maticevski"}},
+{cat:"Clothing – Full Body",name:"Evening Dress",restore:45,t1:120,t2:240,t3:485,t4:975,t5:2400,brands:{t1:"Target, Big W, H&M, Kmart, Cotton On, Shein AU, Temu, Best&Less, Suzanne Grae, Beme",t2:"Review, Myer Own, Rockmans, Millers, Crossroads, Sussan, Beme, City Chic, Autograph, Noni B",t3:"Witchery, Country Road, Saba, Scanlan Theodore, Seed Heritage, Assembly Label, Oxford, Sportscraft, Jac+Jack, Lover",t4:"Zimmermann, Rebecca Vallance, Bec & Bridge, Camilla, Aje, Manning Cartell, Sass & Bide, Ginger & Smart, Veronika Maine, Lover",t5:"Carla Zampatti, Alex Perry, Maticevski, Paolo Sebastian, Ae'lkemi, Dion Lee, Steven Khalil, Toni Maticevski, Ginger & Smart, Zimmermann"}},
+{cat:"Clothing – Full Body",name:"Skirt – Plain",restore:12,t1:32,t2:68,t3:135,t4:270,t5:555,brands:{t1:"Kmart, Big W, Target, Cotton On, H&M, Shein AU, Temu, Best&Less, Jay Jays, Suzanne Grae",t2:"Jeanswest, Uniqlo, Myer Own, Rivers, Review, Rockmans, Millers, Crossroads, Sussan, Beme",t3:"Country Road, Witchery, Saba, Seed Heritage, Trenery, Oxford, Assembly Label, Jac+Jack, Sportscraft, Indie & Co",t4:"Scanlan Theodore, Veronika Maine, Camilla, Aje, Bec & Bridge, Manning Cartell, Rebecca Vallance, Ginger & Smart, DKNY, Tommy Hilfiger",t5:"Carla Zampatti, Zimmermann, Alex Perry, Maticevski, Vince, Theory, The Row, Ae'lkemi, Dion Lee, Ginger & Smart"}},
+{cat:"Wedding & Formal",name:"Wedding Gown",restore:120,t1:500,t2:1100,t3:2500,t4:5750,t5:16500,brands:{t1:"Temu, Shein Bridal, eBay Bridal, Amazon AU, H&M Bridal, ASOS Bridal, Ever-Pretty, JJ's House, Azazie, Cocomelody",t2:"Brides of Sydney, White Runway, Luv Bridal, Bridal Wardrobe, White One, Ivory & White, Stella York, Wed2B, Epiphany Bridal, True Bride",t3:"Dell'Amore Bridal, Raffaele Ciuca, Oleg Cassini (AU), Peter Trends, Stella York premium, Calla Blanche, Grace Loves Lace (entry), White Lily Couture (entry), Bridal Lane, KWH Bride",t4:"Vera Wang (entry), Martina Liana, Maggie Sottero premium, Monique Lhuillier (entry), Rebecca Vallance Bridal, Grace Loves Lace, Paolo Sebastian (entry), KWH Bride premium, Tara Lauren, Jennifer Gifford",t5:"Vera Wang, Monique Lhuillier, Reem Acra, Carla Zampatti Bridal, Paolo Sebastian, Steven Khalil, Maticevski, Alex Perry Bridal, Galia Lahav, Berta"}},
+{cat:"Wedding & Formal",name:"Evening Gown",restore:55,t1:175,t2:425,t3:1050,t4:2750,t5:8000,brands:{t1:"Temu, Shein Formal, eBay, Amazon AU, H&M, ASOS, JJ's House, Azazie, Ever-Pretty, Cocomelody",t2:"Review, Myer Own, Rockmans, Millers, Crossroads formal, Sussan, Beme, City Chic, Autograph, Noni B",t3:"Jadore, Tiffany Designs, Elle Zeitoune, Rebecca Vallance (sale), Zimmermann (sale), Aje, Manning Cartell, Studio Minc, Bec & Bridge (sale), Ginger & Smart",t4:"Zimmermann, Rebecca Vallance, Bec & Bridge, Camilla, Aje, Manning Cartell, Sass & Bide, Paolo Sebastian (entry), Veronika Maine, Carla Zampatti (sale)",t5:"Carla Zampatti, Alex Perry, Maticevski, Paolo Sebastian, Steven Khalil, Ae'lkemi, Dion Lee, Toni Maticevski, Ginger & Smart, Zimmermann couture"}},
+{cat:"Suede & Leather",name:"Suede/Leather Jacket",restore:65,t1:150,t2:300,t3:600,t4:1300,t5:3400,brands:{t1:"Kmart, Big W, Target (faux), H&M (faux), Cotton On (faux), Shein AU (faux), Temu (faux), Best&Less (faux), Jay Jays (faux), Factorie (faux)",t2:"Jeanswest, Myer Own, Rivers, Supré, Valley Girl, Review, Rockmans, Cotton On, H&M premium, Crossroads",t3:"Country Road, Witchery, Sportscraft, Saba, Assembly Label, Oxford, MJ Bale, Politix, Seed Heritage, Trenery",t4:"Allsaints, Aje, Tommy Hilfiger, Calvin Klein, Hugo Boss, Scanlan Theodore, Veronika Maine, Manning Cartell, Bec & Bridge, Gant",t5:"Acne Studios, IRO Paris, Toteme, Drome, Deadwood, The Row, Helmut Lang, Yves Saint Laurent, Balenciaga, Rick Owens"}},
+{cat:"Accessories",name:"Bag",restore:16,t1:25,t2:58,t3:140,t4:350,t5:1250,brands:{t1:"Kmart, Big W, Target, Cotton On, H&M, Shein AU, Temu, Best&Less, Jay Jays, Factorie",t2:"Colette by Colette Hayman, Olga Berg, Billini, Mimco (sale), Myer Own, Sportsgirl, Strandbags, Novo, Rubi, Forever New",t3:"Mimco, Oroton, Fossil, Radley, Matt & Nat, Status Anxiety, Saben, Elms Leather, Deadly Ponies, Love Your Wardrobe",t4:"Kate Spade, Coach, Michael Kors, Furla, Tory Burch, Celine (entry), Mulberry (entry), Oroton Heritage, Strathberry, Polene",t5:"Oroton Heritage premium, Celine, Balenciaga, Saint Laurent, Gucci, Prada, Loewe, Bottega Veneta, The Row, Chanel"}},
+{cat:"Household Linen",name:"Towel",restore:7,t1:13,t2:29,t3:65,t4:145,t5:350,brands:{t1:"Kmart, Big W, Target, Aldi, IKEA, Shein AU, Temu, Best&Less, H&M Home, IKEA",t2:"Myer Own, Canningvale, Sheridan (sale), Bambury, H&M Home, Bed Bath N' Table, Adairs, Linen House, Spotlight, Freedom",t3:"Sheridan, Bambury, Baksana, Canningvale premium, Faribault, Cultiver, Linen House premium, Adairs premium, Laura Ashley, Christy",t4:"Baksana premium, Sheridan Luxury, Abyss & Habidecor (entry), Christy Royal, Missoni Home, Yves Delorme, Coyuchi, Frette (entry), Matouk (entry), Sferra (entry)",t5:"Frette, Abyss & Habidecor, Matouk, Pratesi, Nancy Koltes, Sferra, Rivolta Carmignani, D. Porthault, Yves Delorme premium, Coyuchi premium"}},
+{cat:"Household Linen",name:"Sheet",restore:12,t1:32,t2:73,t3:175,t4:425,t5:1050,brands:{t1:"Kmart, Big W, Target, Aldi, IKEA, Shein AU, Temu, Best&Less, H&M Home, Cotton On Home",t2:"Myer Own, Canningvale, Sheridan (sale), Bambury, H&M Home, Bed Bath N' Table, Adairs, Linen House, Spotlight, Freedom",t3:"Sheridan, Bambury, Baksana, Canningvale premium, Libeco, Cultiver, Linen House premium, Adairs premium, Laura Ashley, Christy",t4:"Baksana premium, Sheridan Luxury, Matouk (entry), Frette (entry), Sferra (entry), Missoni Home, Yves Delorme, Coyuchi, Cultiver premium, Libeco premium",t5:"Frette, Matouk, Pratesi, Sferra, Nancy Koltes, Rivolta Carmignani, D. Porthault, Yves Delorme premium, Coyuchi premium, Zimmerli Home"}},
+{cat:"Household Linen",name:"Doona Cover",restore:16,t1:50,t2:110,t3:250,t4:575,t5:1650,brands:{t1:"Kmart, Big W, Target, Aldi, IKEA, Shein AU, Temu, Best&Less, H&M Home, Cotton On Home",t2:"Myer Own, Canningvale, Sheridan (sale), Bambury, H&M Home, Bed Bath N' Table, Adairs, Linen House, Spotlight, Freedom",t3:"Sheridan, Bambury, Baksana, Canningvale premium, Libeco, Cultiver, Linen House premium, Adairs premium, Laura Ashley, Christy",t4:"Baksana premium, Sheridan Luxury, Matouk (entry), Frette (entry), Missoni Home, Yves Delorme, Coyuchi, Sferra (entry), Cultiver premium, Libeco premium",t5:"Frette, Matouk, Pratesi, Sferra, Missoni Home premium, Rivolta Carmignani, D. Porthault, Yves Delorme premium, Coyuchi premium, Zimmerli Home"}},
+{cat:"Household Linen",name:"Pillow Case",restore:6,t1:14,t2:33,t3:73,t4:160,t5:385,brands:{t1:"Kmart, Big W, Target, Aldi, IKEA, Shein AU, Temu, Best&Less, H&M Home, Cotton On Home",t2:"Myer Own, Canningvale, Sheridan (sale), Bambury, H&M Home, Bed Bath N' Table, Adairs, Linen House, Spotlight, Freedom",t3:"Sheridan, Bambury, Baksana, Canningvale premium, Frette (entry), Cultiver, Libeco, Linen House premium, Adairs premium, Laura Ashley",t4:"Baksana premium, Sheridan Luxury, Frette (mid), Matouk (entry), Missoni Home, Yves Delorme, Coyuchi, Sferra (entry), Cultiver premium, Libeco premium",t5:"Frette, Matouk, Pratesi, Sferra, Nancy Koltes, Rivolta Carmignani, D. Porthault, Yves Delorme premium, Coyuchi premium, Zimmerli Home"}},
+{cat:"Household Linen",name:"Pillow",restore:14,t1:35,t2:80,t3:180,t4:425,t5:1300,brands:{t1:"Kmart, Big W, Target, Aldi, IKEA, Shein AU, Temu, Best&Less, H&M Home, Spotlight",t2:"Tontine, Bambury, Sheridan (sale), Myer Own, Bed Bath N' Table, Adairs, Linen House, Canningvale, Spotlight, Freedom",t3:"Sheridan, Tontine premium, Bambury, Baksana, Linen House, Cultiver, Dunlopillo, Tempur (entry), Sealy, Adairs premium",t4:"Baksana premium, Sheridan Luxury, Bambury premium, Pacific Coast Feather, Sobel Westex, Dunlopillo premium, Tempur, Sealy premium, Downland, Pyrenex",t5:"Frette, Matouk, Pacific Coast Feather premium, Cuddledown, Sferra, Brinkhaus, Pyrenex, Downland premium, Coyuchi, D. Porthault"}},
+{cat:"Table Linen",name:"Table Cloth",restore:7,t1:25,t2:58,t3:130,t4:290,t5:700,brands:{t1:"Kmart, Big W, Target, Aldi, IKEA, Shein AU, Temu, Best&Less, H&M Home, Spotlight",t2:"Myer Own, H&M Home, Sheridan (sale), Country Road Home, Adairs, Bed Bath N' Table, Linen House, Spotlight, Freedom, Target premium",t3:"Sheridan, Country Road Home, Libeco, Fog Linen, Bambury, Cultiver, Linen House premium, Adairs premium, Laura Ashley, Mungo",t4:"Libeco, Fog Linen, Mungo, Lapuan Kankurit, Le Jacquard Français (entry), Charvet Editions (entry), Fog & Goose, Boon Decor, Society Limonta (entry), Yves Delorme (entry)",t5:"Le Jacquard Français, Charvet Editions, Frette, Matouk, Pratesi, Rivolta Carmignani, D. Porthault, Yves Delorme, Sferra, Society Limonta"}},
+{cat:"Bedding – Bulky",name:"Doona",restore:22,t1:85,t2:200,t3:440,t4:1050,t5:2750,brands:{t1:"Kmart, Big W, Target, Aldi, IKEA, Shein AU, Temu, Best&Less, H&M Home, Spotlight",t2:"Tontine, Bambury, Sheridan (sale), Myer Own, Bed Bath N' Table, Adairs, Linen House, Canningvale, Spotlight, Freedom",t3:"Sheridan, Bambury, Baksana, Tontine premium, Linen House premium, Cultiver, Adairs premium, Dunlopillo, Laura Ashley, Christy",t4:"Baksana premium, Sheridan Luxury, Bambury premium, Pacific Coast Feather, Sobel Westex, Dunlopillo premium, Downland, Pyrenex, Brinkhaus, Tempur",t5:"Frette, Matouk, Pacific Coast Feather premium, Cuddledown, Sferra, Brinkhaus premium, Pyrenex premium, Downland premium, Coyuchi, D. Porthault"}},
+{cat:"Bedding – Bulky",name:"Sleeping Bag",restore:24,t1:50,t2:115,t3:270,t4:590,t5:1650,brands:{t1:"Kmart, Big W, Target, Aldi, Decathlon, Shein AU, Temu, Best&Less, H&M Sport, Aldi Sport",t2:"Kathmandu, Mountain Designs, Paddy Pallin, Coleman, Anaconda, Outrak, Darche, Wanderer, Spinifex, OZtrail",t3:"Sea to Summit, Exped, Macpac, Marmot (entry), The North Face (entry), Helsport, Vaude, Mammut (entry), Black Diamond, Rab (entry)",t4:"Sea to Summit premium, Marmot premium, Western Mountaineering (entry), Rab, Feathered Friends (entry), Nemo, Big Agnes, Therm-a-Rest, Mountain Hardwear, Enlightened Equipment",t5:"Western Mountaineering, Feathered Friends, Rab premium, Enlightened Equipment, Mountain Hardwear premium, Zpacks, Cumulus, PHD Designs, Nunatak, Katabatic Gear"}},
+{cat:"Bedding – Bulky",name:"Cotton Mattress Protector",restore:16,t1:35,t2:85,t3:200,t4:440,t5:1200,brands:{t1:"Kmart, Big W, Target, Aldi, IKEA, Shein AU, Temu, Best&Less, H&M Home, Spotlight",t2:"Tontine, Bambury, Sheridan (sale), Myer Own, Bed Bath N' Table, Adairs, Linen House, Canningvale, Spotlight, Freedom",t3:"Sheridan, Bambury, Baksana, Tontine Naturals, Linen House, Cultiver, Adairs premium, Dunlopillo, Sealy (entry), Laura Ashley",t4:"Baksana premium, Sheridan Luxury, Bambury premium, Protect-A-Bed premium, Sealy, Dunlopillo premium, Tempur, Brinkhaus, Downland, Pacific Coast Feather",t5:"Frette, Protect-A-Bed Platinum, Matouk, Tempur premium, Sferra, Brinkhaus premium, Pyrenez, Naturepedic, Coyuchi, D. Porthault"}},
+];
+
+// ─── Global State ────────────────────────────────────────────
+let quantities={}, currentTier=1, currentDmgMult=1.00, currentDmgCode='STD';
+let multipliers={STD:1.00,WET:1.10,FIRE:1.25,MOLD:1.35};
+let ohRates={van:65,truck1:95,truck2:130,site_std:75,site_spec:110,site_we:130,fuel_metro:25,fuel_reg:60,admin:40,callout:120};
+let lastReport=null; // stores last calculated report data
+
+// ─── Nav ─────────────────────────────────────────────────────
+function showPage(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(btn)btn.classList.add('active');
+  document.getElementById('jobBar').style.display=id==='calc'?'block':'none';
+  if(id==='admin'){renderAdminTable();syncOHRatesToAdmin()}
+  if(id==='brands')renderBrandsTable();
+}
+function updateRef(){
+  const v=document.getElementById('claimNum').value||document.getElementById('jobNum').value||'New Job';
+  document.getElementById('claimRefDisp').textContent=v;
+}
+
+// ─── Damage / Tier ───────────────────────────────────────────
+function selectDmg(el){
+  document.querySelectorAll('.dmg-card').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');currentDmgMult=parseFloat(el.dataset.mult);currentDmgCode=el.dataset.code;renderItems();
+}
+function selectTier(el){
+  document.querySelectorAll('.tier-pill').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');currentTier=parseInt(el.dataset.tier);renderItems();
+}
+
+// ─── Items ───────────────────────────────────────────────────
+function getCategories(){return[...new Set(items.map(i=>i.cat))]}
+function getTierPrice(item,tier){return[item.t1,item.t2,item.t3,item.t4,item.t5][tier-1]}
+function populateCatFilter(){
+  const cats=getCategories();
+  const sel=document.getElementById('catFilter');
+  const dl=document.getElementById('catList');
+  sel.innerHTML='<option value="">All Categories</option>';
+  if(dl)dl.innerHTML='';
+  cats.forEach(c=>{sel.innerHTML+=`<option value="${c}">${c}</option>`;if(dl)dl.innerHTML+=`<option value="${c}">`});
+}
+function filterItems(){renderItems()}
+function renderItems(){
+  const search=(document.getElementById('itemSearch').value||'').toLowerCase();
+  const catF=document.getElementById('catFilter').value;
+  const filtered=items.filter(i=>(!catF||i.cat===catF)&&(!search||i.name.toLowerCase().includes(search)||i.cat.toLowerCase().includes(search)));
+  const grouped={};filtered.forEach(i=>{if(!grouped[i.cat])grouped[i.cat]=[];grouped[i.cat].push(i)});
+  let html='';
+  Object.entries(grouped).forEach(([cat,citems])=>{
+    const catQty=citems.reduce((a,i)=>a+(quantities[i.name]||0),0);
+    html+=`<div class="cat-group"><div class="cat-heading">${cat}<span class="cat-count">${citems.length}${catQty>0?' · '+catQty+' sel':''}</span></div><div class="item-grid">`;
+    citems.forEach(item=>{
+      const qty=quantities[item.name]||0,rp=getTierPrice(item,currentTier);
+      html+=`<div class="item-card ${qty>0?'has-qty':''}" id="card-${esc(item.name)}">
+        <div class="item-name">${item.name}</div>
+        <div class="item-meta"><span class="item-price-tag">Repl: $${rp}</span><span class="item-restore-tag">Rest: $${item.restore}</span></div>
+        <div class="qty-row">
+          <button class="qty-minus" onclick="adjQty('${esc(item.name)}',-1)">−</button>
+          <input type="number" class="qty-field" value="${qty||''}" placeholder="0" min="0" onchange="setQty('${esc(item.name)}',this.value)" id="qty-${esc(item.name)}"/>
+          <button class="qty-plus" onclick="adjQty('${esc(item.name)}',1)">+</button>
+        </div>
+      </div>`;
+    });
+    html+=`</div></div>`;
+  });
+  if(!html)html='<div class="empty">No items match your filter.</div>';
+  document.getElementById('itemsContainer').innerHTML=html;updateBadge();
+}
+function esc(s){return s.replace(/[^a-zA-Z0-9]/g,'_')}
+function adjQty(name,delta){
+  const key=items.find(i=>esc(i.name)===name)?.name;if(!key)return;
+  quantities[key]=Math.max(0,(quantities[key]||0)+delta);
+  const el=document.getElementById('qty-'+name);if(el)el.value=quantities[key]||'';
+  const card=document.getElementById('card-'+name);if(card)card.classList.toggle('has-qty',quantities[key]>0);
+  updateBadge();
+}
+function setQty(name,val){
+  const key=items.find(i=>esc(i.name)===name)?.name;if(!key)return;
+  quantities[key]=Math.max(0,parseInt(val)||0);
+  const card=document.getElementById('card-'+name);if(card)card.classList.toggle('has-qty',quantities[key]>0);
+  updateBadge();
+}
+function updateBadge(){
+  const t=Object.values(quantities).reduce((a,b)=>a+b,0);
+  document.getElementById('totalItemBadge').textContent=t+' item'+(t!==1?'s':'')+' selected';
+}
+function clearAll(){quantities={};renderItems();document.getElementById('resultsZone').style.display='none';lastReport=null}
+
+// ─── Overhead ────────────────────────────────────────────────
+function getOverhead(){
+  const vr=parseFloat(document.getElementById('vehicleType').value)||0;
+  const th=parseFloat(document.getElementById('transHrs').value)||0;
+  const fu=parseFloat(document.getElementById('fuel').value)||0;
+  const to=parseFloat(document.getElementById('tolls').value)||0;
+  const sr=parseFloat(document.getElementById('siteRate').value)||ohRates.site_std;
+  const sh=parseFloat(document.getElementById('siteHrs').value)||0;
+  const pk=parseFloat(document.getElementById('pkgTotal').value)||0;
+  const ad=parseFloat(document.getElementById('admin').value)||0;
+  const st=parseFloat(document.getElementById('storage').value)||0;
+  const ins=parseFloat(document.getElementById('insurance').value)||0;
+  const ot=parseFloat(document.getElementById('otherOH').value)||0;
+  const transport=vr*th+fu+to,site=sr*sh,total=transport+site+pk+ad+st+ins+ot;
+  return{transport,site,pkg:pk,admin:ad,storage:st,insurance:ins,other:ot,total,
+    lines:[{l:'Transport (vehicle + fuel + tolls)',v:transport},{l:'On-site labour',v:site},{l:'Packaging',v:pk},{l:'Admin / job management',v:ad},{l:'Storage',v:st},{l:'Insurance',v:ins},{l:'Other',v:ot}]};
+}
+
+// ─── Calculate ───────────────────────────────────────────────
+function calculate(){
+  const sel=items.filter(i=>(quantities[i.name]||0)>0);
+  if(!sel.length){alert('Please select at least one item with a quantity.');return}
+  let totalRepl=0,totalRestBase=0;
+  const rows=[];
+  sel.forEach(item=>{
+    const qty=quantities[item.name],rp=getTierPrice(item,currentTier);
+    const rb=item.restore,ru=rb*currentDmgMult;
+    totalRepl+=rp*qty;totalRestBase+=rb*qty;
+    rows.push({cat:item.cat,name:item.name,qty,rp,ru,lr:rp*qty,lru:ru*qty,pct:rp>0?ru/rp*100:0});
+  });
+  const totalRestDmg=totalRestBase*currentDmgMult,oh=getOverhead();
+  const totalFull=totalRestDmg+oh.total,saving=totalRepl-totalFull;
+  const restPct=totalRepl>0?totalFull/totalRepl*100:0,savPct=totalRepl>0?saving/totalRepl*100:0;
+  const itemPct=totalRepl>0?totalRestDmg/totalRepl*100:0;
+  const tierNames=['Budget','Economy','Mid-Range','Premium','Luxury'];
+  const dmgNames={STD:'Standard',WET:'Water/Wet',FIRE:'Medium Fire',MOLD:'Heavy Mould'};
+  const job={
+    jobName:gv('jobName'),custName:gv('custName'),custAddr:gv('custAddr'),
+    claimNum:gv('claimNum'),jobNum:gv('jobNum'),insurer:gv('insurer'),
+    dateOfLoss:gv('dateOfLoss'),jobDate:gv('jobDate'),assessorName:gv('assessorName')
+  };
+  // Store report data for export
+  lastReport={rows,totalRepl,totalRestBase,totalRestDmg,totalFull,saving,restPct,savPct,itemPct,oh,job,tier:currentTier,dmgCode:currentDmgCode,dmgMult:currentDmgMult,tierNames,dmgNames};
+
+  let vClass='green',vIcon='✅',vHead,vBody;
+  if(restPct<=25){vHead='Restoration is within the 10–25% target zone';vBody=`Total restoration (${fmt(totalFull)}) is <strong>${restPct.toFixed(1)}%</strong> of replacement value (${fmt(totalRepl)}). Strong claim outcome — saves <strong>${fmt(saving)} (${savPct.toFixed(1)}%)</strong> vs replacement.`;vClass='green'}
+  else if(restPct<=40){vHead='Restoration above target — review overhead allocation';vBody=`At <strong>${restPct.toFixed(1)}%</strong> of replacement. Item costs alone are ${itemPct.toFixed(1)}%. Overheads pushing above 25% target.`;vClass='amber';vIcon='⚠️'}
+  else{vHead='Restoration cost exceeds 40% — reassess';vBody=`At ${restPct.toFixed(1)}%, significantly above the 10–25% target. Review pricing or overhead allocation.`;vClass='red';vIcon='🔴'}
+
+  let tRows='';let lastCat='';
+  rows.forEach(r=>{
+    if(r.cat!==lastCat){lastCat=r.cat;tRows+=`<tr class="cat-row"><td colspan="7">${r.cat}</td></tr>`}
+    const bc=r.pct<=25?'#2E7D32':r.pct<=40?'#F57F17':'#C62828';
+    tRows+=`<tr><td>${r.name}</td><td class="r">${r.qty}</td><td class="r">${fmt(r.rp)}</td><td class="r">${fmt(r.lr)}</td><td class="r" style="color:#1565C0">${fmt(r.ru)}</td><td class="r" style="color:#1565C0">${fmt(r.lru)}</td><td class="r"><div class="pct-cell"><span>${r.pct.toFixed(0)}%</span><div class="pct-bar-mini" style="width:${Math.min(r.pct,100)*0.45}px;background:${bc}"></div></div></td></tr>`;
+  });
+  tRows+=`<tr class="total-row"><td colspan="3" style="color:rgba(255,255,255,.7)">ITEM SUBTOTALS</td><td class="r">${fmt(totalRepl)}</td><td style="color:rgba(255,255,255,.5);font-size:.62rem">×${currentDmgMult.toFixed(2)}</td><td class="r">${fmt(totalRestDmg)}</td><td class="r">${itemPct.toFixed(1)}%</td></tr>`;
+  const mc=restPct<=25?'linear-gradient(90deg,#1B5E20,#43A047)':restPct<=40?'linear-gradient(90deg,#E65100,#FB8C00)':'linear-gradient(90deg,#B71C1C,#E53935)';
+  const totalItems=rows.reduce((a,r)=>a+r.qty,0);
+
+  const html=`
+    <div class="report-actions">
+      <button class="rpt-btn excel" onclick="exportReportExcel()">📊 Save as Excel</button>
+      <button class="rpt-btn pdf" onclick="exportReportPDF()">📄 Save as PDF / Print</button>
+      <button class="rpt-btn brands" onclick="exportBrandsExcel()">🏷️ Export Brands (Excel)</button>
+    </div>
+    <div class="report-header">
+      <div class="rh-field"><div class="rh-label">Job Name</div><div class="rh-value">${job.jobName||'—'}</div></div>
+      <div class="rh-field"><div class="rh-label">Customer</div><div class="rh-value">${job.custName||'—'}</div></div>
+      <div class="rh-field"><div class="rh-label">Address</div><div class="rh-value">${job.custAddr||'—'}</div></div>
+      <div class="rh-field"><div class="rh-label">Claim Number</div><div class="rh-value mono">${job.claimNum||'—'}</div></div>
+      <div class="rh-field"><div class="rh-label">Internal Job #</div><div class="rh-value mono">${job.jobNum||'—'}</div></div>
+      <div class="rh-field"><div class="rh-label">Client</div><div class="rh-value">${job.insurer||'—'}</div></div>
+      <div class="rh-field"><div class="rh-label">Date of Loss</div><div class="rh-value">${job.dateOfLoss||'—'}</div></div>
+      <div class="rh-field"><div class="rh-label">Job Date</div><div class="rh-value">${job.jobDate||'—'}</div></div>
+      <div class="rh-field"><div class="rh-label">Assessor</div><div class="rh-value">${job.assessorName||'—'}</div></div>
+    </div>
+    <p style="font-size:.75rem;color:var(--muted);margin-bottom:12px">T${currentTier} ${tierNames[currentTier-1]} | ${dmgNames[currentDmgCode]} ×${currentDmgMult.toFixed(2)} | ${totalItems} items</p>
+    <div class="claim-bar">
+      <div class="claim-cell"><div class="claim-cell-label">Replacement Value</div><div class="claim-cell-value">${fmt(totalRepl)}</div><div class="claim-cell-sub">T${currentTier} ${tierNames[currentTier-1]} · ${totalItems} items</div></div>
+      <div class="claim-cell"><div class="claim-cell-label">Restoration (items)</div><div class="claim-cell-value">${fmt(totalRestDmg)}</div><div class="claim-cell-sub">Base × ${currentDmgMult.toFixed(2)} ${dmgNames[currentDmgCode]}</div></div>
+      <div class="claim-cell"><div class="claim-cell-label">Job Overheads</div><div class="claim-cell-value">${fmt(oh.total)}</div><div class="claim-cell-sub">Transport, site, packaging…</div></div>
+      <div class="claim-cell highlight"><div class="claim-cell-label">Total Claim Cost</div><div class="claim-cell-value">${fmt(totalFull)}</div><div class="claim-cell-sub">vs ${fmt(totalRepl)} replacement</div></div>
+      <div class="claim-cell highlight"><div class="claim-cell-label">Client Saving</div><div class="claim-cell-value">${fmt(saving)}</div><div class="claim-cell-sub">${savPct.toFixed(1)}% vs replacement</div></div>
+    </div>
+    <div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px"><span style="font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Restoration as % of Replacement Value</span><span style="font-size:.68rem;color:var(--muted)">Target: 10–25%</span></div>
+      <div class="ratio-track"><div class="ratio-fill" style="width:${Math.min(restPct,100)}%;background:${mc}">${restPct.toFixed(1)}% of replacement</div></div>
+      <div class="ratio-legend">
+        <div class="ratio-legend-item"><div class="rl-dot" style="background:#1B5E20"></div>≤25% Target</div>
+        <div class="ratio-legend-item"><div class="rl-dot" style="background:#E65100"></div>25–40% Review</div>
+        <div class="ratio-legend-item"><div class="rl-dot" style="background:#B71C1C"></div>&gt;40% Reassess</div>
+      </div>
+    </div>
+    <div class="verdict-strip ${vClass}"><div class="verdict-icon">${vIcon}</div><div><div class="verdict-head">${vHead}</div><div class="verdict-body">${vBody}</div></div></div>
+    <div class="oh-breakdown-row">
+      <div class="oh-breakdown-card"><h4>Overhead Breakdown</h4>${oh.lines.filter(l=>l.v>0).map(l=>`<div class="oh-line"><span class="ohl">${l.l}</span><span class="ohv">${fmt(l.v)}</span></div>`).join('')||'<div class="oh-line"><span class="ohl" style="font-style:italic">No overheads</span></div>'}<div class="oh-line" style="margin-top:4px;padding-top:4px;border-top:2px solid var(--line)"><span>Total Overheads</span><span class="ohv">${fmt(oh.total)}</span></div></div>
+      <div class="oh-breakdown-card"><h4>Claim Summary</h4>
+        <div class="oh-line"><span class="ohl">Base restore (before multiplier)</span><span class="ohv">${fmt(totalRestBase)}</span></div>
+        <div class="oh-line"><span class="ohl">Damage add ×${currentDmgMult.toFixed(2)}</span><span class="ohv">+${fmt(totalRestDmg-totalRestBase)}</span></div>
+        <div class="oh-line"><span class="ohl">Items after multiplier</span><span class="ohv">${fmt(totalRestDmg)}</span></div>
+        <div class="oh-line"><span class="ohl">Job overheads</span><span class="ohv">${fmt(oh.total)}</span></div>
+        <div class="oh-line" style="margin-top:4px;padding-top:4px;border-top:2px solid var(--line)"><span>Total Restoration</span><span class="ohv" style="color:#1565C0">${fmt(totalFull)}</span></div>
+        <div class="oh-line"><span class="ohl">Replacement value</span><span class="ohv">${fmt(totalRepl)}</span></div>
+        <div class="oh-line" style="color:var(--good)"><span>Total Saving</span><span class="ohv">${fmt(saving)} (${savPct.toFixed(1)}%)</span></div>
+      </div>
+    </div>
+    <div class="table-wrap"><table class="breakdown-tbl"><thead><tr><th>Item</th><th class="r">Qty</th><th class="r">Repl/unit</th><th class="r">Repl Total</th><th class="r">Rest/unit</th><th class="r">Rest Total</th><th class="r">Rest % Repl</th></tr></thead><tbody>${tRows}</tbody></table></div>`;
+
+  const z=document.getElementById('resultsZone');z.style.display='block';z.innerHTML=html;
+  z.scrollIntoView({behavior:'smooth'});
+}
+function gv(id){return document.getElementById(id)?.value||''}
+function fmt(n){return'$'+Math.round(n).toLocaleString('en-AU')}
+
+// ─── PDF REPORT EXPORT ───────────────────────────────────────
+function exportReportPDF(){
+  if(!lastReport){alert('Please generate a report first.');return}
+  const r=lastReport;
+  const tierColors=['#2E7D32','#BF6F00','#BF360C','#4A148C','#0D47A1'];
+  const tierBg=['#E8F5E9','#FFF8E1','#FBE9E7','#F3E5F5','#E3F2FD'];
+  const tc=tierColors[r.tier-1];
+  const tbg=tierBg[r.tier-1];
+  const dmgColors={STD:{bg:'#E8F5E9',col:'#2E7D32'},WET:{bg:'#E3F2FD',col:'#1565C0'},FIRE:{bg:'#FBE9E7',col:'#BF360C'},MOLD:{bg:'#F3E5F5',col:'#4A148C'}};
+  const dmgC=dmgColors[r.dmgCode]||{bg:'#f5f5f5',col:'#333'};
+
+  // Collect brands used for the selected tier
+  const usedItems=items.filter(i=>(quantities[i.name]||0)>0);
+  const tierKey='t'+r.tier;
+  const brandsUsed=[...new Set(usedItems.flatMap(i=>(i.brands?.[tierKey]||'').split(',').map(b=>b.trim()).filter(Boolean)))].sort();
+
+  // Item rows grouped by category
+  let itemRowsHtml='';
+  let lastCat='';
+  r.rows.forEach(row=>{
+    if(row.cat!==lastCat){
+      lastCat=row.cat;
+      itemRowsHtml+=`<tr class="cat-row"><td colspan="7">${row.cat}</td></tr>`;
+    }
+    const pctCol=row.pct<=25?'#1B5E20':row.pct<=40?'#E65100':'#B71C1C';
+    const pctBg=row.pct<=25?'#E8F5E9':row.pct<=40?'#FFF3E0':'#FFEBEE';
+    itemRowsHtml+=`<tr>
+      <td class="item-name-cell">${row.name}</td>
+      <td class="num">${row.qty}</td>
+      <td class="num">${fmt(row.rp)}</td>
+      <td class="num">${fmt(row.lr)}</td>
+      <td class="num rest">${fmt(row.ru)}</td>
+      <td class="num rest">${fmt(row.lru)}</td>
+      <td class="num" style="color:${pctCol};background:${pctBg};font-weight:700">${row.pct.toFixed(0)}%</td>
+    </tr>`;
+  });
+  // Subtotal row
+  itemRowsHtml+=`<tr class="subtotal-row">
+    <td colspan="3" style="text-align:left;padding-left:10px">Item Subtotals</td>
+    <td class="num">${fmt(r.totalRepl)}</td>
+    <td class="num rest" colspan="1">×${r.dmgMult.toFixed(2)}</td>
+    <td class="num rest">${fmt(r.totalRestDmg)}</td>
+    <td class="num" style="font-weight:700">${r.itemPct.toFixed(1)}%</td>
+  </tr>`;
+
+  // Overhead lines
+  const ohLinesHtml=r.oh.lines.filter(l=>l.v>0).map(l=>`
+    <tr><td>${l.l}</td><td class="num">${fmt(l.v)}</td></tr>`).join('')||`<tr><td colspan="2" style="font-style:italic;color:#888">No overheads entered</td></tr>`;
+
+  // Verdict
+  const vConf=r.restPct<=25
+    ?{bg:'#E8F5E9',border:'#4CAF50',icon:'✅',head:'Target Zone Achieved',sub:'Restoration is within the 10–25% target'}
+    :r.restPct<=40
+    ?{bg:'#FFF8E1',border:'#FFC107',icon:'⚠️',head:'Above Target — Review Overheads',sub:'Restoration is above the 25% target'}
+    :{bg:'#FFEBEE',border:'#EF5350',icon:'🔴',head:'Significantly Above Target',sub:'Restoration exceeds 40% — reassess claim structure'};
+
+  // Ratio bar width clamped to 100%
+  const barW=Math.min(r.restPct,100).toFixed(1);
+  const barCol=r.restPct<=25?'#2E7D32':r.restPct<=40?'#E65100':'#B71C1C';
+
+  // Distinct categories in this claim
+  const catsInClaim=[...new Set(r.rows.map(row=>row.cat))];
+
+  const html=`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>ClaimsCost Report — ${r.job.claimNum||r.job.jobName||'Claim'}</title>
+<style>
+  @page{size:A4 portrait;margin:18mm 16mm 18mm 16mm}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Helvetica Neue',Arial,sans-serif;font-size:8.5pt;color:#111;background:#fff;line-height:1.4}
+
+  /* ── Page header repeated on every page ── */
+  .page-header{display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #0D1B35;padding-bottom:8px;margin-bottom:16px}
+  .ph-left{display:flex;align-items:center;gap:10px}
+  .ph-logo{width:28px;height:28px;background:#E8A020;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+  .ph-title{font-size:13pt;font-weight:700;color:#0D1B35;font-family:Georgia,serif}
+  .ph-sub{font-size:7pt;color:#888;margin-top:1px;letter-spacing:.05em;text-transform:uppercase}
+  .ph-right{text-align:right;font-size:7pt;color:#888;line-height:1.6}
+  .ph-right strong{color:#0D1B35;font-size:8pt}
+
+  /* ── Section headings ── */
+  .section-head{font-size:7pt;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#fff;background:#0D1B35;padding:5px 10px;margin:14px 0 8px;border-radius:3px}
+
+  /* ── Job details grid ── */
+  .job-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px}
+  .job-field{background:#F8F6F2;border-radius:4px;padding:6px 8px;border-left:3px solid #E8A020}
+  .job-field .jfl{font-size:6.5pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#888;margin-bottom:2px}
+  .job-field .jfv{font-size:8.5pt;font-weight:600;color:#0D1B35}
+  .job-field .jfv.mono{font-family:'Courier New',monospace;color:#1A3A5C}
+
+  /* ── Damage + Tier badges ── */
+  .settings-row{display:flex;gap:10px;margin-bottom:12px}
+  .setting-box{flex:1;border-radius:5px;padding:8px 12px;border:1.5px solid}
+  .setting-box .sb-label{font-size:6.5pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px}
+  .setting-box .sb-value{font-size:11pt;font-weight:700}
+  .setting-box .sb-desc{font-size:7pt;margin-top:2px;opacity:.75}
+
+  /* ── Tier brands ── */
+  .brands-box{background:#F8F6F2;border-radius:5px;padding:8px 12px;margin-bottom:12px;border-left:4px solid ${tc}}
+  .brands-box .bb-title{font-size:7pt;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:${tc};margin-bottom:4px}
+  .brands-box .bb-items{font-size:7.5pt;color:#333;line-height:1.7}
+
+  /* ── Items table ── */
+  table{width:100%;border-collapse:collapse;font-size:7.5pt}
+  th{background:#0D1B35;color:#fff;padding:5px 7px;text-align:left;font-size:6.5pt;letter-spacing:.08em;text-transform:uppercase;font-weight:600;white-space:nowrap}
+  th.num{text-align:right}
+  td{padding:4px 7px;border-bottom:1px solid #EEE;vertical-align:middle}
+  td.num{text-align:right;font-family:'Courier New',monospace}
+  td.rest{color:#1565C0;font-weight:500}
+  td.item-name-cell{max-width:160px}
+  tr.cat-row td{background:#EAE3D6;font-size:6.5pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#666;padding:3px 7px;border-bottom:none}
+  tr.subtotal-row td{background:#0D1B35;color:#fff;font-weight:700;font-size:7.5pt;padding:5px 7px}
+  tr.subtotal-row td.num{color:#F5C842;font-family:'Courier New',monospace}
+  tr.subtotal-row td.rest{color:#90CAF9}
+  tr:hover:not(.cat-row):not(.subtotal-row) td{background:#FAFAF8}
+
+  /* ── Two-column layout ── */
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+  .panel{border:1px solid #ddd;border-radius:5px;overflow:hidden}
+  .panel-head{background:#EAE3D6;padding:5px 10px;font-size:6.5pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#555}
+  .panel-body{padding:8px 10px}
+  .line-row{display:flex;justify-content:space-between;padding:3px 0;font-size:7.5pt;border-bottom:1px solid #f0ebe2}
+  .line-row:last-child{border-bottom:none;font-weight:700;padding-top:5px;margin-top:3px;border-top:2px solid #ddd}
+  .line-label{color:#666}
+  .line-val{font-family:'Courier New',monospace;font-weight:500}
+
+  /* ── Summary boxes ── */
+  .summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+  .sum-box{border-radius:5px;padding:10px 12px;text-align:center}
+  .sum-box .sb-amt{font-size:15pt;font-weight:700;font-family:Georgia,serif;margin-bottom:2px}
+  .sum-box .sb-lbl{font-size:6.5pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;opacity:.7}
+  .sum-box .sb-sub{font-size:6.5pt;margin-top:2px;opacity:.6}
+
+  /* ── Ratio bar ── */
+  .ratio-section{margin-bottom:12px}
+  .ratio-label-row{display:flex;justify-content:space-between;margin-bottom:4px;font-size:7pt;color:#555}
+  .ratio-track{height:18px;background:#E8ECF0;border-radius:9px;overflow:hidden;position:relative}
+  .ratio-fill{height:100%;border-radius:9px;display:flex;align-items:center;padding:0 8px;font-size:7pt;font-weight:700;color:#fff;white-space:nowrap;font-family:'Courier New',monospace}
+  .ratio-legend{display:flex;gap:14px;margin-top:4px;flex-wrap:wrap}
+  .rl-item{display:flex;align-items:center;gap:4px;font-size:6.5pt;color:#666}
+  .rl-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+  /* target zone overlay */
+  .ratio-track-wrap{position:relative}
+  .ratio-zone-line{position:absolute;top:0;bottom:0;width:2px;background:rgba(255,255,255,0.5);z-index:2;pointer-events:none}
+
+  /* ── Verdict ── */
+  .verdict{border-radius:6px;padding:10px 14px;display:flex;gap:10px;align-items:flex-start;margin-bottom:12px;border:2px solid ${vConf.border};background:${vConf.bg}}
+  .verdict-icon{font-size:16pt;line-height:1;flex-shrink:0}
+  .verdict-head{font-size:9.5pt;font-weight:700;margin-bottom:2px;color:#111}
+  .verdict-body{font-size:7.5pt;color:#444;line-height:1.5}
+
+  /* ── Footer ── */
+  .report-footer{margin-top:18px;border-top:1px solid #ddd;padding-top:8px;display:flex;justify-content:space-between;font-size:6.5pt;color:#aaa}
+
+  /* ── Page breaks ── */
+  .page-break{page-break-before:always;padding-top:8px}
+  .avoid-break{page-break-inside:avoid}
+
+  @media print{
+    body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
+</style>
+</head>
+<body>
+
+<!-- ══ PAGE HEADER ══ -->
+<div class="page-header">
+  <div class="ph-left">
+    <div class="ph-logo">🧺</div>
+    <div>
+      <div class="ph-title">Restoration vs Replacement Report</div>
+      <div class="ph-sub">ClaimsCost Pro · Australian Market 2025–26</div>
+    </div>
+  </div>
+  <div class="ph-right">
+    <strong>${r.job.claimNum||r.job.jobNum||'—'}</strong><br/>
+    ${r.job.jobDate||new Date().toLocaleDateString('en-AU')}<br/>
+    ${r.job.assessorName||'—'}
+  </div>
+</div>
+
+<!-- ══ SECTION 1: JOB INFORMATION ══ -->
+<div class="section-head">1 — Job Information</div>
+<div class="job-grid">
+  <div class="job-field"><div class="jfl">Job Name</div><div class="jfv">${r.job.jobName||'—'}</div></div>
+  <div class="job-field"><div class="jfl">Customer Name</div><div class="jfv">${r.job.custName||'—'}</div></div>
+  <div class="job-field"><div class="jfl">Property Address</div><div class="jfv">${r.job.custAddr||'—'}</div></div>
+  <div class="job-field"><div class="jfl">Claim Number</div><div class="jfv mono">${r.job.claimNum||'—'}</div></div>
+  <div class="job-field"><div class="jfl">Internal Job #</div><div class="jfv mono">${r.job.jobNum||'—'}</div></div>
+  <div class="job-field"><div class="jfl">Client</div><div class="jfv">${r.job.insurer||'—'}</div></div>
+  <div class="job-field"><div class="jfl">Date of Loss</div><div class="jfv">${r.job.dateOfLoss||'—'}</div></div>
+  <div class="job-field"><div class="jfl">Job Date</div><div class="jfv">${r.job.jobDate||'—'}</div></div>
+  <div class="job-field"><div class="jfl">Assessor</div><div class="jfv">${r.job.assessorName||'—'}</div></div>
+</div>
+
+<!-- ══ SECTION 2: DAMAGE TYPE ══ -->
+<div class="section-head">2 — Damage Type &amp; Assessment Basis</div>
+<div class="settings-row">
+  <div class="setting-box" style="border-color:${dmgC.col};background:${dmgC.bg}">
+    <div class="sb-label" style="color:${dmgC.col}">Damage Type Applied</div>
+    <div class="sb-value" style="color:${dmgC.col}">${r.dmgNames[r.dmgCode]}</div>
+    <div class="sb-desc" style="color:${dmgC.col}">Restoration multiplier: ×${r.dmgMult.toFixed(2)} applied to all base restoration prices</div>
+  </div>
+  <div class="setting-box" style="border-color:${tc};background:${tbg}">
+    <div class="sb-label" style="color:${tc}">Replacement Tier</div>
+    <div class="sb-value" style="color:${tc}">T${r.tier} — ${r.tierNames[r.tier-1]}</div>
+    <div class="sb-desc" style="color:${tc}">Replacement prices based on Australian market comparable brands at this quality tier</div>
+  </div>
+  <div class="setting-box" style="border-color:#555;background:#F5F5F5">
+    <div class="sb-label" style="color:#555">Items Assessed</div>
+    <div class="sb-value" style="color:#0D1B35">${r.rows.reduce((a,rw)=>a+rw.qty,0)} items</div>
+    <div class="sb-desc" style="color:#555">${r.rows.length} item type${r.rows.length!==1?'s':''} across ${catsInClaim.length} categor${catsInClaim.length!==1?'ies':'y'}</div>
+  </div>
+</div>
+
+<!-- ══ SECTION 3: REPLACEMENT TIER & BRANDS ══ -->
+<div class="section-head">3 — Replacement Tier Summary &amp; Comparable Brands</div>
+<div class="brands-box">
+  <div class="bb-title">T${r.tier} ${r.tierNames[r.tier-1]} Tier — Comparable Australian Market Brands Used in Replacement Calculations</div>
+  <div class="bb-items">${brandsUsed.length>0?brandsUsed.join(' &nbsp;·&nbsp; '):'No brand data available for selected items.'}</div>
+</div>
+<div style="font-size:7pt;color:#666;margin-bottom:12px;line-height:1.6">
+  The replacement values in this report are based on the <strong>T${r.tier} ${r.tierNames[r.tier-1]}</strong> mid-market price point for each item type. Comparable brands at this tier include those listed above. Replacement prices represent the current Australian retail cost to replace each item new with a comparable quality product.
+</div>
+
+<!-- ══ SECTION 4: ITEMS — RESTORATION vs REPLACEMENT ══ -->
+<div class="section-head">4 — Itemised Restoration &amp; Replacement Costs</div>
+<div class="avoid-break">
+<table>
+  <thead>
+    <tr>
+      <th style="width:28%">Item</th>
+      <th class="num" style="width:5%">Qty</th>
+      <th class="num" style="width:12%">Repl/Unit</th>
+      <th class="num" style="width:12%">Repl Total</th>
+      <th class="num" style="width:12%">Rest/Unit</th>
+      <th class="num" style="width:12%">Rest Total</th>
+      <th class="num" style="width:10%">Rest % Repl</th>
+    </tr>
+  </thead>
+  <tbody>
+    ${itemRowsHtml}
+  </tbody>
+</table>
+</div>
+
+<!-- ══ SECTION 5: OVERHEADS ══ -->
+<div class="section-head page-break">5 — Overhead Costs</div>
+<div class="two-col">
+  <div class="panel">
+    <div class="panel-head">Overhead Line Items</div>
+    <div class="panel-body">
+      <table style="font-size:7.5pt">
+        <colgroup><col style="width:70%"/><col style="width:30%"/></colgroup>
+        ${ohLinesHtml}
+        <tr><td style="font-weight:700;padding-top:6px;border-top:2px solid #ddd">Total Job Overheads</td><td class="num" style="font-weight:700;padding-top:6px;border-top:2px solid #ddd">${fmt(r.oh.total)}</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-head">Overhead Notes</div>
+    <div class="panel-body" style="font-size:7.5pt;color:#444;line-height:1.7">
+      <p>Overheads include all job-related costs beyond item restoration — vehicle transport, on-site assessment labour, packaging materials, job administration, storage, and insurance cover for items in transit.</p>
+      <br/>
+      <p>Overhead costs are added to item restoration costs to calculate the total restoration claim value.</p>
+      <br/>
+      <p><strong>Note:</strong> Overheads form part of the total restoration claim and are included in the restoration-to-replacement ratio calculation.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SECTION 6: RESTORATION COST SUMMARY ══ -->
+<div class="section-head">6 — Summary of Restoration Costs</div>
+<div class="two-col">
+  <div class="panel">
+    <div class="panel-head">Restoration Cost Build-up</div>
+    <div class="panel-body">
+      <div class="line-row"><span class="line-label">Base restoration (all items, standard)</span><span class="line-val">${fmt(r.totalRestBase)}</span></div>
+      <div class="line-row"><span class="line-label">Damage multiplier add (×${r.dmgMult.toFixed(2)} ${r.dmgNames[r.dmgCode]})</span><span class="line-val">+ ${fmt(r.totalRestDmg-r.totalRestBase)}</span></div>
+      <div class="line-row"><span class="line-label">Item restoration after damage multiplier</span><span class="line-val">${fmt(r.totalRestDmg)}</span></div>
+      <div class="line-row"><span class="line-label">Job overheads</span><span class="line-val">+ ${fmt(r.oh.total)}</span></div>
+      <div class="line-row" style="color:#0D1B35"><span class="line-label">Total Restoration Claim</span><span class="line-val" style="color:#1565C0;font-size:9pt">${fmt(r.totalFull)}</span></div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-head">Restoration by Category</div>
+    <div class="panel-body">
+      ${catsInClaim.map(cat=>{
+        const catRows=r.rows.filter(rw=>rw.cat===cat);
+        const catRest=catRows.reduce((a,rw)=>a+rw.lru,0);
+        const catQty=catRows.reduce((a,rw)=>a+rw.qty,0);
+        return`<div class="line-row"><span class="line-label">${cat} (${catQty} items)</span><span class="line-val">${fmt(catRest)}</span></div>`;
+      }).join('')}
+      <div class="line-row"><span class="line-label">Total Items</span><span class="line-val">${fmt(r.totalRestDmg)}</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SECTION 7: REPLACEMENT COST SUMMARY ══ -->
+<div class="section-head">7 — Summary of Replacement Costs</div>
+<div class="two-col">
+  <div class="panel">
+    <div class="panel-head">Replacement Cost Build-up</div>
+    <div class="panel-body">
+      ${catsInClaim.map(cat=>{
+        const catRows=r.rows.filter(rw=>rw.cat===cat);
+        const catRepl=catRows.reduce((a,rw)=>a+rw.lr,0);
+        const catQty=catRows.reduce((a,rw)=>a+rw.qty,0);
+        return`<div class="line-row"><span class="line-label">${cat} (${catQty} items)</span><span class="line-val">${fmt(catRepl)}</span></div>`;
+      }).join('')}
+      <div class="line-row" style="color:#0D1B35"><span class="line-label">Total Replacement Value</span><span class="line-val" style="color:#0D1B35;font-size:9pt">${fmt(r.totalRepl)}</span></div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-head">Replacement Basis</div>
+    <div class="panel-body" style="font-size:7.5pt;color:#444;line-height:1.7">
+      <p><strong>Tier:</strong> T${r.tier} ${r.tierNames[r.tier-1]}</p><br/>
+      <p>All replacement prices are based on the current Australian retail mid-market price for each item type at the <strong>${r.tierNames[r.tier-1]}</strong> quality tier.</p><br/>
+      <p>Prices represent the cost to replace each item new with a comparable product from an equivalent brand at the same market tier.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SECTION 8: RESTORATION vs REPLACEMENT ══ -->
+<div class="section-head">8 — Restoration vs Replacement — Target Zone Assessment</div>
+
+<div class="summary-grid">
+  <div class="sum-box" style="background:#EAE3D6">
+    <div class="sb-lbl">Total Replacement Value</div>
+    <div class="sb-amt" style="color:#0D1B35">${fmt(r.totalRepl)}</div>
+    <div class="sb-sub">T${r.tier} ${r.tierNames[r.tier-1]} tier · ${r.rows.reduce((a,rw)=>a+rw.qty,0)} items</div>
+  </div>
+  <div class="sum-box" style="background:#E3F2FD">
+    <div class="sb-lbl">Total Restoration Claim</div>
+    <div class="sb-amt" style="color:#1565C0">${fmt(r.totalFull)}</div>
+    <div class="sb-sub">Items + overheads</div>
+  </div>
+  <div class="sum-box" style="background:#E8F5E9">
+    <div class="sb-lbl">Total Client Saving</div>
+    <div class="sb-amt" style="color:#1B5E20">${fmt(r.saving)}</div>
+    <div class="sb-sub">${r.savPct.toFixed(1)}% less than replacement</div>
+  </div>
+</div>
+
+<div class="ratio-section">
+  <div class="ratio-label-row">
+    <strong style="font-size:7.5pt">Restoration Cost as % of Replacement Value</strong>
+    <span>Target Zone: 10% – 25% &nbsp;|&nbsp; <strong style="color:${barCol}">${r.restPct.toFixed(1)}%</strong></span>
+  </div>
+  <div class="ratio-track-wrap">
+    <div class="ratio-track">
+      <div class="ratio-fill" style="width:${barW}%;background:${barCol}">${r.restPct.toFixed(1)}% of replacement value</div>
+    </div>
+    <!-- target zone markers at 10% and 25% -->
+    <div class="ratio-zone-line" style="left:10%"></div>
+    <div class="ratio-zone-line" style="left:25%"></div>
+  </div>
+  <div class="ratio-legend" style="margin-top:5px">
+    <div class="rl-item"><div class="rl-dot" style="background:#2E7D32"></div>0–25% — Target zone (excellent)</div>
+    <div class="rl-item"><div class="rl-dot" style="background:#E65100"></div>25–40% — Above target (review overheads)</div>
+    <div class="rl-item"><div class="rl-dot" style="background:#B71C1C"></div>&gt;40% — Significantly above target</div>
+    <div class="rl-item"><div class="rl-dot" style="background:rgba(255,255,255,0.5);border:1px dashed #aaa"></div>Dashed lines = 10% and 25% boundaries</div>
+  </div>
+</div>
+
+<div class="verdict avoid-break">
+  <div class="verdict-icon">${vConf.icon}</div>
+  <div>
+    <div class="verdict-head">${vConf.head} — ${r.restPct.toFixed(1)}% of Replacement Value</div>
+    <div class="verdict-body">
+      ${r.restPct<=25
+        ?`Restoration cost of <strong>${fmt(r.totalFull)}</strong> represents <strong>${r.restPct.toFixed(1)}%</strong> of the total replacement value of <strong>${fmt(r.totalRepl)}</strong>. This is within the 10–25% target zone, demonstrating a strong value case for restoration. The client saves <strong>${fmt(r.saving)} (${r.savPct.toFixed(1)}%)</strong> compared to replacement.`
+        :r.restPct<=40
+        ?`Restoration cost of <strong>${fmt(r.totalFull)}</strong> is <strong>${r.restPct.toFixed(1)}%</strong> of replacement value <strong>${fmt(r.totalRepl)}</strong>. Item restoration alone is ${r.itemPct.toFixed(1)}% — job overheads are contributing to the result being above the 25% target. Review overhead allocation. The client still saves <strong>${fmt(r.saving)}</strong> compared to replacement.`
+        :`Restoration cost of <strong>${fmt(r.totalFull)}</strong> is <strong>${r.restPct.toFixed(1)}%</strong> of replacement value <strong>${fmt(r.totalRepl)}</strong>. This is significantly above the 10–25% target zone. Review item pricing, overhead allocation, or consider whether full or partial replacement is more appropriate for some items.`}
+    </div>
+  </div>
+</div>
+
+<!-- ══ FOOTER ══ -->
+<div class="report-footer">
+  <span>ClaimsCost Pro — Restoration vs Replacement Report</span>
+  <span>Claim: ${r.job.claimNum||'—'} &nbsp;|&nbsp; Job: ${r.job.jobNum||'—'} &nbsp;|&nbsp; Generated: ${new Date().toLocaleString('en-AU')}</span>
+  <span>Confidential — Internal Use</span>
+</div>
+
+<script>window.onload=function(){window.print()}<\/script>
+</body></html>`;
+
+  const pw=window.open('','_blank','width=900,height=1100');
+  if(!pw){alert('Pop-up blocked. Please allow pop-ups for this page and try again.');return}
+  pw.document.write(html);
+  pw.document.close();
+}
+
+// ─── EXCEL EXPORT — Report ────────────────────────────────────
+function exportReportExcel(){
+  if(!lastReport){alert('Generate a report first.');return}
+  const r=lastReport;
+  const wb=XLSX.utils.book_new();
+
+  // Sheet 1: Summary
+  const sumData=[
+    ['ClaimsCost Pro — Restoration vs Replacement Report'],
+    [''],
+    ['JOB DETAILS',''],
+    ['Job Name',r.job.jobName],['Customer',r.job.custName],['Address',r.job.custAddr],
+    ['Claim Number',r.job.claimNum],['Internal Job #',r.job.jobNum],['Client',r.job.insurer],
+    ['Date of Loss',r.job.dateOfLoss],['Job Date',r.job.jobDate],['Assessor',r.job.assessorName],
+    [''],
+    ['CLAIM SETTINGS',''],
+    ['Replacement Tier',`T${r.tier} — ${r.tierNames[r.tier-1]}`],
+    ['Damage Type',`${r.dmgNames[r.dmgCode]} ×${r.dmgMult.toFixed(2)}`],
+    [''],
+    ['FINANCIAL SUMMARY',''],
+    ['Total Replacement Value (AUD)',r.totalRepl],
+    ['Restoration — Items (base)',r.totalRestBase],
+    ['Damage Multiplier Add',r.totalRestDmg-r.totalRestBase],
+    ['Restoration — Items (after multiplier)',r.totalRestDmg],
+    ['Job Overheads',r.oh.total],
+    ['',''],
+    ['TOTAL RESTORATION CLAIM',r.totalFull],
+    ['Total Saving vs Replacement',r.saving],
+    ['Restoration as % of Replacement',r.restPct/100],
+    [''],
+    ['OVERHEAD BREAKDOWN',''],
+    ...r.oh.lines.filter(l=>l.v>0).map(l=>[l.l,l.v]),
+    ['Total Overheads',r.oh.total],
+  ];
+  const ws1=XLSX.utils.aoa_to_sheet(sumData);
+  ws1['!cols']=[{wch:40},{wch:22}];
+  // Format currency cells
+  ['B17','B18','B19','B20','B21','B23','B24'].forEach(ref=>{if(ws1[ref])ws1[ref].z='"$"#,##0'});
+  if(ws1['B25'])ws1['B25'].z='0.0%';
+  XLSX.utils.book_append_sheet(wb,ws1,'Summary');
+
+  // Sheet 2: Item Breakdown
+  const itemHeaders=['Category','Item Name','Qty','Repl/Unit ($)','Repl Total ($)','Restore Base/Unit ($)','Restore×Mult/Unit ($)','Restore Total ($)','Restore % of Repl'];
+  const itemRows=r.rows.map(row=>[row.cat,row.name,row.qty,row.rp,row.lr,row.rp>0?row.ru/currentDmgMult:0,row.ru,row.lru,row.pct/100]);
+  const ws2=XLSX.utils.aoa_to_sheet([itemHeaders,...itemRows,
+    ['','TOTALS',r.rows.reduce((a,rw)=>a+rw.qty,0),
+     '','',r.totalRepl,'','',r.totalRestDmg,'',r.restPct/100]
+  ]);
+  ws2['!cols']=[{wch:22},{wch:26},{wch:6},{wch:14},{wch:14},{wch:18},{wch:20},{wch:16},{wch:16}];
+  XLSX.utils.book_append_sheet(wb,ws2,'Item Breakdown');
+
+  // Sheet 3: Overheads
+  const ohRows=[['Overhead Item','Amount ($)'],...r.oh.lines.filter(l=>l.v>0).map(l=>[l.l,l.v]),['Total Overheads',r.oh.total]];
+  const ws3=XLSX.utils.aoa_to_sheet(ohRows);
+  ws3['!cols']=[{wch:36},{wch:16}];
+  XLSX.utils.book_append_sheet(wb,ws3,'Overheads');
+
+  const fname=`ClaimsCost_Report_${(r.job.claimNum||r.job.jobName||'report').replace(/[^a-z0-9]/gi,'_')}_${new Date().toISOString().slice(0,10)}.xlsx`;
+  XLSX.writeFile(wb,fname);
+}
+
+// ─── EXCEL EXPORT — Brands ───────────────────────────────────
+function exportBrandsExcel(){
+  const wb=XLSX.utils.book_new();
+  const headers=['Category','Item','T1 Budget','T2 Economy','T3 Mid-Range','T4 Premium','T5 Luxury'];
+  const rows=items.map(i=>[i.cat,i.name,i.brands?.t1||'',i.brands?.t2||'',i.brands?.t3||'',i.brands?.t4||'',i.brands?.t5||'']);
+  const ws=XLSX.utils.aoa_to_sheet([headers,...rows]);
+  ws['!cols']=[{wch:24},{wch:28},{wch:50},{wch:50},{wch:50},{wch:50},{wch:50}];
+  XLSX.utils.book_append_sheet(wb,ws,'Brands Reference');
+  XLSX.writeFile(wb,`ClaimsCost_Brands_Reference_${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+
+// ─── CSV EXPORT — Brands ─────────────────────────────────────
+function exportBrandsCSV(){
+  const headers=['Category','Item','T1 Budget','T2 Economy','T3 Mid-Range','T4 Premium','T5 Luxury'];
+  const rows=items.map(i=>[i.cat,i.name,i.brands?.t1||'',i.brands?.t2||'',i.brands?.t3||'',i.brands?.t4||'',i.brands?.t5||'']);
+  const csv=[headers,...rows].map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`ClaimsCost_Brands_${new Date().toISOString().slice(0,10)}.csv`;a.click();
+}
+
+// ─── AI Pricing Generator ─────────────────────────────────────
+async function generateAIPricing(){
+  const name=document.getElementById('newName').value.trim();
+  const cat=document.getElementById('newCat').value.trim();
+  const restore=document.getElementById('newRestore').value;
+  if(!name){alert('Enter an Item Name first.');return}
+  const btn=document.getElementById('aiBtn');
+  btn.classList.add('loading');btn.disabled=true;
+  const box=document.getElementById('aiResultBox');box.classList.remove('show');box.innerHTML='';
+  try{
+    const prompt=`You are a pricing expert for the Australian garment and linen restoration industry.
+
+Generate realistic Australian retail replacement mid-prices for this item across 5 quality tiers.
+
+Item: ${name}
+Category: ${cat||'Garment/Linen'}
+${restore?`Base restoration price: $${restore} AUD`:''}
+
+Return ONLY a JSON object with exactly these keys (integer AUD values, no symbols):
+{"t1":0,"t2":0,"t3":0,"t4":0,"t5":0}
+
+Where:
+- t1 = Budget tier (Kmart, Big W, Target, H&M, Shein AU price)
+- t2 = Economy tier (Uniqlo, Bonds, Jeanswest, Myer Own price)
+- t3 = Mid-Range tier (Country Road, Sheridan, Witchery price)
+- t4 = Premium tier (Zimmermann, Hugo Boss, Baksana price)
+- t5 = Luxury tier (Carla Zampatti, Frette, Loro Piana price)
+
+Each tier should be 1.8–2.8x the previous tier. Return only the JSON, no other text.`;
+
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:300,messages:[{role:'user',content:prompt}]})
+    });
+    const data=await resp.json();
+    const text=data.content?.map(c=>c.text||'').join('')||'';
+    const clean=text.replace(/```json|```/g,'').trim();
+    const parsed=JSON.parse(clean);
+    const{t1,t2,t3,t4,t5}=parsed;
+    document.getElementById('newT1').value=t1;
+    document.getElementById('newT2').value=t2;
+    document.getElementById('newT3').value=t3;
+    document.getElementById('newT4').value=t4;
+    document.getElementById('newT5').value=t5;
+    box.innerHTML=`<strong>✨ AI Generated Prices</strong><br/>T1 Budget: $${t1} &nbsp;|&nbsp; T2 Economy: $${t2} &nbsp;|&nbsp; T3 Mid-Range: $${t3} &nbsp;|&nbsp; T4 Premium: $${t4} &nbsp;|&nbsp; T5 Luxury: $${t5}<br/><span style="font-size:.7rem;color:#7B1FA2">Review and adjust if needed, then click Add Item.</span>`;
+    box.classList.add('show');
+  }catch(err){
+    box.innerHTML=`<span style="color:#C62828">AI pricing failed: ${err.message}. Please enter prices manually.</span>`;
+    box.classList.add('show');
+  }finally{btn.classList.remove('loading');btn.disabled=false}
+}
+
+// ─── Brands table ────────────────────────────────────────────
+function renderBrandsTable(){
+  const search=(document.getElementById('brandsSearch')?.value||'').toLowerCase();
+  const filtered=items.filter(i=>!search||i.name.toLowerCase().includes(search)||i.cat.toLowerCase().includes(search)||(i.brands&&Object.values(i.brands).some(b=>b.toLowerCase().includes(search))));
+  const grouped={};filtered.forEach(i=>{if(!grouped[i.cat])grouped[i.cat]=[];grouped[i.cat].push(i)});
+  const tierBg=['#E8F5E9','#FFF8E1','#FBE9E7','#F3E5F5','#E3F2FD'];
+  let html='';
+  Object.entries(grouped).forEach(([cat,citems])=>{
+    html+=`<tr class="cat-row"><td colspan="7">${cat}</td></tr>`;
+    citems.forEach(item=>{
+      const b=item.brands||{t1:'',t2:'',t3:'',t4:'',t5:''};
+      html+=`<tr><td style="color:var(--muted);font-size:.68rem">${item.cat}</td><td style="font-weight:600;font-size:.76rem;white-space:nowrap">${item.name}</td>
+        <td style="background:${tierBg[0]};font-size:.69rem">${b.t1||'—'}</td>
+        <td style="background:${tierBg[1]};font-size:.69rem">${b.t2||'—'}</td>
+        <td style="background:${tierBg[2]};font-size:.69rem">${b.t3||'—'}</td>
+        <td style="background:${tierBg[3]};font-size:.69rem">${b.t4||'—'}</td>
+        <td style="background:${tierBg[4]};font-size:.69rem">${b.t5||'—'}</td>
+      </tr>`;
+    });
+  });
+  document.getElementById('brandsTblBody').innerHTML=html||'<tr><td colspan="7" class="empty">No items match.</td></tr>';
+}
+
+// ─── Admin ───────────────────────────────────────────────────
+function renderAdminTable(){
+  const search=(document.getElementById('adminSearch')?.value||'').toLowerCase();
+  const filtered=items.filter(i=>!search||i.name.toLowerCase().includes(search)||i.cat.toLowerCase().includes(search));
+  document.getElementById('adminTblBody').innerHTML=filtered.map(item=>{
+    const idx=items.indexOf(item);
+    return`<tr>
+      <td style="font-size:.68rem;color:var(--muted)">${item.cat}</td>
+      <td><input class="edit-input" value="${item.name}" onchange="items[${idx}].name=this.value;renderItems();" style="width:145px"/></td>
+      <td><input class="edit-input" type="number" value="${item.restore}" min="0" step="0.5" onchange="items[${idx}].restore=parseFloat(this.value)||0;renderItems();" style="width:62px"/></td>
+      <td><input class="edit-input" type="number" value="${item.t1}" min="0" onchange="items[${idx}].t1=parseFloat(this.value)||0;" style="width:58px"/></td>
+      <td><input class="edit-input" type="number" value="${item.t2}" min="0" onchange="items[${idx}].t2=parseFloat(this.value)||0;" style="width:58px"/></td>
+      <td><input class="edit-input" type="number" value="${item.t3}" min="0" onchange="items[${idx}].t3=parseFloat(this.value)||0;" style="width:58px"/></td>
+      <td><input class="edit-input" type="number" value="${item.t4}" min="0" onchange="items[${idx}].t4=parseFloat(this.value)||0;" style="width:58px"/></td>
+      <td><input class="edit-input" type="number" value="${item.t5}" min="0" onchange="items[${idx}].t5=parseFloat(this.value)||0;" style="width:58px"/></td>
+      <td><button class="btn-del" onclick="deleteItem(${idx})">✕</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function deleteItem(idx){if(!confirm(`Remove "${items[idx].name}"?`))return;items.splice(idx,1);renderAdminTable();renderItems()}
+
+function addItem(){
+  const cat=document.getElementById('newCat').value.trim();
+  const name=document.getElementById('newName').value.trim();
+  const restore=parseFloat(document.getElementById('newRestore').value)||0;
+  const t1=parseFloat(document.getElementById('newT1').value)||0;
+  const t2=parseFloat(document.getElementById('newT2').value)||0;
+  const t3=parseFloat(document.getElementById('newT3').value)||0;
+  const t4=parseFloat(document.getElementById('newT4').value)||0;
+  const t5=parseFloat(document.getElementById('newT5').value)||0;
+  if(!cat||!name){alert('Category and Item Name required.');return}
+  if(items.find(i=>i.name===name)){alert('Item with that name already exists.');return}
+  items.push({cat,name,restore,t1,t2,t3,t4,t5,brands:{t1:'',t2:'',t3:'',t4:'',t5:''}});
+  ['newCat','newName','newRestore','newT1','newT2','newT3','newT4','newT5'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('aiResultBox').classList.remove('show');
+  populateCatFilter();renderAdminTable();renderItems();
+  alert(`"${name}" added!`);
+}
+
+function saveMultipliers(){
+  ['STD','WET','FIRE','MOLD'].forEach(code=>{
+    const val=parseFloat(document.getElementById('mult_'+code).value);
+    if(val>=1){
+      multipliers[code]=val;
+      const card=document.querySelector(`.dmg-card[data-code="${code}"]`);
+      if(card){card.dataset.mult=val.toFixed(2);card.querySelector('.dmg-mult').textContent=`×${val.toFixed(2)}`}
+    }
+  });
+  const active=document.querySelector('.dmg-card.active');
+  if(active)currentDmgMult=parseFloat(active.dataset.mult);
+  renderItems();alert('Multipliers saved.');
+}
+
+function syncOHRatesToAdmin(){
+  document.getElementById('rate_van').value=ohRates.van;
+  document.getElementById('rate_truck1').value=ohRates.truck1;
+  document.getElementById('rate_truck2').value=ohRates.truck2;
+  document.getElementById('rate_site_std').value=ohRates.site_std;
+  document.getElementById('rate_site_spec').value=ohRates.site_spec;
+  document.getElementById('rate_site_we').value=ohRates.site_we;
+  document.getElementById('rate_fuel_metro').value=ohRates.fuel_metro;
+  document.getElementById('rate_fuel_reg').value=ohRates.fuel_reg;
+  document.getElementById('rate_admin').value=ohRates.admin;
+  document.getElementById('rate_callout').value=ohRates.callout;
+}
+
+function saveOHRates(){
+  ohRates.van=parseFloat(document.getElementById('rate_van').value)||65;
+  ohRates.truck1=parseFloat(document.getElementById('rate_truck1').value)||95;
+  ohRates.truck2=parseFloat(document.getElementById('rate_truck2').value)||130;
+  ohRates.site_std=parseFloat(document.getElementById('rate_site_std').value)||75;
+  ohRates.site_spec=parseFloat(document.getElementById('rate_site_spec').value)||110;
+  ohRates.site_we=parseFloat(document.getElementById('rate_site_we').value)||130;
+  ohRates.fuel_metro=parseFloat(document.getElementById('rate_fuel_metro').value)||25;
+  ohRates.fuel_reg=parseFloat(document.getElementById('rate_fuel_reg').value)||60;
+  ohRates.admin=parseFloat(document.getElementById('rate_admin').value)||40;
+  ohRates.callout=parseFloat(document.getElementById('rate_callout').value)||120;
+  // Update calculator dropdowns
+  const vSel=document.getElementById('vehicleType');
+  if(vSel){
+    vSel.innerHTML=`<option value="0">None / own vehicle</option><option value="${ohRates.van}">Small Van ($${ohRates.van}/hr)</option><option value="${ohRates.truck1}">Truck 1–4t ($${ohRates.truck1}/hr)</option><option value="${ohRates.truck2}">Truck 4t+ ($${ohRates.truck2}/hr)</option>`;
+  }
+  const srSel=document.getElementById('siteRate');
+  if(srSel){
+    srSel.innerHTML=`<option value="${ohRates.site_std}">$${ohRates.site_std}/hr Std</option><option value="${ohRates.site_spec}">$${ohRates.site_spec}/hr Spec</option><option value="${ohRates.site_we}">$${ohRates.site_we}/hr WE</option>`;
+  }
+  document.getElementById('fuel').value=ohRates.fuel_metro;
+  document.getElementById('admin').value=ohRates.admin;
+  alert('Overhead rates saved and applied to Calculator.');
+}
+
+function saveAll(){renderItems();populateCatFilter();alert('Pricing saved and applied.')}
+
+// ─── Save / Load ─────────────────────────────────────────────
+function showSaveModal(){document.getElementById('saveModal').classList.add('open')}
+function closeModal(){document.getElementById('saveModal').classList.remove('open')}
+
+function getJobData(){
+  return{version:'4.0',savedAt:new Date().toISOString(),
+    job:{jobName:gv('jobName'),custName:gv('custName'),custAddr:gv('custAddr'),claimNum:gv('claimNum'),jobNum:gv('jobNum'),insurer:gv('insurer'),dateOfLoss:gv('dateOfLoss'),jobDate:gv('jobDate'),assessorName:gv('assessorName')},
+    settings:{tier:currentTier,dmgCode:currentDmgCode,dmgMult:currentDmgMult},
+    overheads:{vehicleType:gv('vehicleType'),transHrs:gv('transHrs'),fuel:gv('fuel'),tolls:gv('tolls'),siteRate:gv('siteRate'),siteHrs:gv('siteHrs'),pkgTotal:gv('pkgTotal'),admin:gv('admin'),storage:gv('storage'),insurance:gv('insurance'),otherOH:gv('otherOH')},
+    quantities,customItems:items,ohRates,multipliers};
+}
+
+function saveJobFile(){
+  const data=getJobData();
+  const jn=data.job.jobName||data.job.claimNum||'job';
+  const fname=`ClaimsCost_${jn.replace(/[^a-z0-9]/gi,'_')}_${new Date().toISOString().slice(0,10)}.json`;
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fname;a.click();
+  closeModal();
+}
+
+function triggerLoad(){document.getElementById('loadFileInput').click()}
+
+function loadJobFile(event){
+  const file=event.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const data=JSON.parse(e.target.result);
+      if(data.job)Object.entries(data.job).forEach(([k,v])=>{const el=document.getElementById(k);if(el)el.value=v||''});
+      if(data.overheads)Object.entries(data.overheads).forEach(([k,v])=>{const el=document.getElementById(k);if(el)el.value=v||''});
+      if(data.settings){
+        currentTier=data.settings.tier||1;currentDmgMult=data.settings.dmgMult||1;currentDmgCode=data.settings.dmgCode||'STD';
+        document.querySelectorAll('.tier-pill').forEach(p=>{p.classList.remove('active');if(parseInt(p.dataset.tier)===currentTier)p.classList.add('active')});
+        document.querySelectorAll('.dmg-card').forEach(c=>{c.classList.remove('active');if(c.dataset.code===currentDmgCode)c.classList.add('active')});
+      }
+      if(data.customItems&&Array.isArray(data.customItems))items=data.customItems;
+      if(data.quantities)quantities=data.quantities;
+      if(data.ohRates)ohRates={...ohRates,...data.ohRates};
+      if(data.multipliers)multipliers={...multipliers,...data.multipliers};
+      populateCatFilter();renderItems();updateRef();
+      alert('Job loaded successfully!');
+    }catch(err){alert('Error loading file: '+err.message)}
+  };
+  reader.readAsText(file);event.target.value='';
+}
+
+// ─── Init ─────────────────────────────────────────────────────
+populateCatFilter();renderItems();
+document.getElementById('jobDate').value=new Date().toISOString().slice(0,10);
+</script>
+</body>
+</html>
