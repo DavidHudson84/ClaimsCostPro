@@ -447,6 +447,48 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--cream);color:var(--
 .import-dest-tab .idt-icon{font-size:1.2rem;display:block;margin-bottom:3px}
 .import-dest-tab .idt-label{font-size:.72rem;font-weight:700;color:var(--ink)}
 .import-dest-tab .idt-sub{font-size:.62rem;color:var(--muted);margin-top:1px}
+/* ══ JOB DETAILS PAGE ══ */
+.jd-layout{padding:28px 20px;max-width:720px;margin:0 auto}
+.jd-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;gap:16px;flex-wrap:wrap}
+.jd-header h2{font-family:'Playfair Display',serif;font-size:1.4rem;margin-bottom:4px;color:var(--navy)}
+.jd-header p{color:var(--muted);font-size:.8rem;line-height:1.5;max-width:450px}
+.jd-header-actions{display:flex;gap:8px;flex-wrap:wrap}
+.jd-btn{padding:9px 18px;border:none;border-radius:7px;font-family:'IBM Plex Sans',sans-serif;font-size:.8rem;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap}
+.jd-btn-primary{background:var(--amber);color:var(--ink)}.jd-btn-primary:hover{background:var(--amber2)}
+.jd-btn-ghost{background:var(--warm);color:var(--ink);border:1px solid var(--line)}.jd-btn-ghost:hover{background:var(--line)}
+.jd-form{display:flex;flex-direction:column;gap:20px}
+.jd-section{background:#fff;border:1px solid var(--line);border-radius:12px;padding:22px 22px 18px;box-shadow:var(--shadow)}
+.jd-section-title{font-size:.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--navy);padding-bottom:10px;margin-bottom:16px;border-bottom:2px solid var(--amber)}
+.jd-field{display:flex;flex-direction:column;margin-bottom:14px}
+.jd-field:last-child{margin-bottom:0}
+.jd-field label{font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.jd-field input,.jd-field select{padding:10px 13px;border:1.5px solid var(--line);border-radius:8px;font-family:'IBM Plex Sans',sans-serif;font-size:.9rem;color:var(--ink);background:var(--paper);transition:all .15s}
+.jd-field input:focus,.jd-field select:focus{outline:none;border-color:var(--amber);background:#fff}
+.jd-field select{cursor:pointer;background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath fill='%23556B82' d='M5 6L0 0h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;background-size:10px;padding-right:36px;appearance:none;-webkit-appearance:none}
+.jd-hint{font-size:.68rem;color:var(--muted);margin-top:5px;line-height:1.5}
+@media(max-width:600px){
+  .jd-layout{padding:14px 12px}
+  .jd-header{flex-direction:column;align-items:stretch;margin-bottom:16px}
+  .jd-header h2{font-size:1.15rem}
+  .jd-header-actions{width:100%}
+  .jd-header-actions .jd-btn{flex:1;font-size:.78rem;padding:11px 10px}
+  .jd-section{padding:16px 14px 12px}
+  .jd-section-title{font-size:.64rem;padding-bottom:8px;margin-bottom:12px}
+  .jd-field label{font-size:.66rem}
+  .jd-field input,.jd-field select{font-size:.92rem;padding:11px 12px}
+}
+
+/* ══ MANAGE — List management cards ══ */
+.list-mgr{display:flex;flex-direction:column;gap:8px;max-height:320px;overflow-y:auto;padding:2px}
+.list-mgr-item{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--paper);border:1px solid var(--line);border-radius:7px;font-size:.82rem;color:var(--ink)}
+.list-mgr-item .lmi-name{flex:1}
+.list-mgr-remove{background:#FFEBEE;color:var(--danger);border:none;border-radius:5px;padding:4px 9px;font-size:.74rem;font-weight:600;cursor:pointer;font-family:'IBM Plex Sans',sans-serif}
+.list-mgr-remove:hover{background:#FFCDD2}
+.list-mgr-add{display:flex;gap:6px;margin-top:10px}
+.list-mgr-add input{flex:1;padding:8px 12px;border:1.5px solid var(--line);border-radius:7px;font-family:'IBM Plex Sans',sans-serif;font-size:.82rem}
+.list-mgr-add input:focus{outline:none;border-color:var(--amber)}
+.list-mgr-add button{padding:8px 16px;background:var(--amber);color:var(--ink);border:none;border-radius:7px;font-weight:700;cursor:pointer;white-space:nowrap}
+
 /* ══ JOBS PAGE ══ */
 .jobs-layout{padding:24px;max-width:1100px;margin:0 auto}
 .jobs-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;gap:16px;flex-wrap:wrap}
@@ -698,7 +740,8 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--cream);color:var(--
     </div>
   </div>
   <nav class="header-nav">
-    <button class="nav-btn active" onclick="showPage('calc',this)">⚡ Calculator</button>
+    <button class="nav-btn active" onclick="showPage('jobdetails',this)">📝 Job Details</button>
+    <button class="nav-btn" onclick="showPage('calc',this)">⚡ Calculator</button>
     <button class="nav-btn" onclick="showPage('est',this)">📋 Estimate</button>
     <button class="nav-btn" onclick="showPage('jobs',this)">🗂 Jobs</button>
     <button class="nav-btn" onclick="showPage('tier',this)">🎯 Tier Finder</button>
@@ -718,21 +761,101 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--cream);color:var(--
 <!-- ══ JOB BAR ══ -->
 <div class="job-bar" id="jobBar">
   <div class="job-bar-inner" id="jobBarInner">
-    <div class="jf"><label>Job Name</label><input type="text" id="jobName" placeholder="e.g. Smith Residence Fire" oninput="updateRef()"/></div>
-    <div class="jf"><label>Customer Name</label><input type="text" id="custName" placeholder="Jane Smith"/></div>
-    <div class="jf"><label>Address</label><input type="text" id="custAddr" placeholder="123 Example St, Melbourne VIC"/></div>
-    <div class="jf"><label>Claim Number</label><input type="text" id="claimNum" placeholder="CLM-2025-0001" oninput="updateRef()"/></div>
-    <div class="jf"><label>Internal Job #</label><input type="text" id="jobNum" placeholder="JOB-0042" oninput="updateRef()"/></div>
-    <div class="jf"><label>Client</label><input type="text" id="insurer" placeholder="Allianz / Crawford & Co"/></div>
-    <div class="jf"><label>Date of Loss</label><input type="date" id="dateOfLoss"/></div>
-    <div class="jf"><label>Job Date</label><input type="date" id="jobDate"/></div>
-    <div class="jf"><label>Assessor Name</label><input type="text" id="assessorName" placeholder="Your name"/></div>
+    <div class="jf"><label>Job Name</label><input type="text" id="jobName" placeholder="e.g. Smith Residence Fire" oninput="syncFromJobBar('jobName',this.value);updateRef()"/></div>
+    <div class="jf"><label>Customer Name</label><input type="text" id="custName" placeholder="Jane Smith" oninput="syncFromJobBar('custName',this.value)"/></div>
+    <div class="jf"><label>Address</label><input type="text" id="custAddr" placeholder="123 Example St, Melbourne VIC" oninput="syncFromJobBar('custAddr',this.value)"/></div>
+    <div class="jf"><label>Claim Number</label><input type="text" id="claimNum" placeholder="CLM-2025-0001" oninput="syncFromJobBar('claimNum',this.value);updateRef()"/></div>
+    <div class="jf"><label>Internal Job #</label><input type="text" id="jobNum" placeholder="JOB-0042" oninput="syncFromJobBar('jobNum',this.value);updateRef()"/></div>
+    <div class="jf"><label>Client</label><select id="insurer" onchange="syncFromJobBar('insurer',this.value)"><option value="">— Select —</option></select></div>
+    <div class="jf"><label>Date of Loss</label><input type="date" id="dateOfLoss" oninput="syncFromJobBar('dateOfLoss',this.value)"/></div>
+    <div class="jf"><label>Job Date</label><input type="date" id="jobDate" oninput="syncFromJobBar('jobDate',this.value)"/></div>
+    <div class="jf"><label>Assessor Name</label><select id="assessorName" onchange="syncFromJobBar('assessorName',this.value)"><option value="">— Select —</option></select></div>
   </div>
   <button class="job-bar-toggle" id="jobBarToggle" onclick="toggleJobBar()" style="display:none">Show More Fields</button>
 </div>
 
+<!-- ══ PAGE: JOB DETAILS ══ -->
+<div class="page active" id="page-jobdetails">
+<div class="jd-layout">
+  <div class="jd-header">
+    <div>
+      <h2>📝 Job Details</h2>
+      <p>Enter all job information here. These details populate the Calculator and Estimate tabs automatically.</p>
+    </div>
+    <div class="jd-header-actions">
+      <button class="jd-btn jd-btn-ghost" onclick="clearJobDetails()">🧹 Clear All</button>
+      <button class="jd-btn jd-btn-primary" onclick="showPage('calc',document.querySelectorAll('.nav-btn')[1])">Continue to Calculator →</button>
+    </div>
+  </div>
+
+  <div class="jd-form">
+    <!-- SECTION 1: Job Info -->
+    <div class="jd-section">
+      <div class="jd-section-title">1 · Job Information</div>
+      <div class="jd-field">
+        <label>Job Name</label>
+        <input type="text" id="jd_jobName" placeholder="e.g. Smith Residence Fire" oninput="syncFromJobDetails('jobName',this.value)"/>
+      </div>
+      <div class="jd-field">
+        <label>Internal Job Number</label>
+        <input type="text" id="jd_jobNum" placeholder="JOB-0042" oninput="syncFromJobDetails('jobNum',this.value)"/>
+      </div>
+      <div class="jd-field">
+        <label>Claim Number</label>
+        <input type="text" id="jd_claimNum" placeholder="CLM-2025-0001" oninput="syncFromJobDetails('claimNum',this.value)"/>
+      </div>
+    </div>
+
+    <!-- SECTION 2: Customer -->
+    <div class="jd-section">
+      <div class="jd-section-title">2 · Customer</div>
+      <div class="jd-field">
+        <label>Customer Name</label>
+        <input type="text" id="jd_custName" placeholder="Jane Smith" oninput="syncFromJobDetails('custName',this.value)"/>
+      </div>
+      <div class="jd-field">
+        <label>Property Address</label>
+        <input type="text" id="jd_custAddr" placeholder="123 Example St, Melbourne VIC 3000" oninput="syncFromJobDetails('custAddr',this.value)"/>
+      </div>
+    </div>
+
+    <!-- SECTION 3: Client / Insurer -->
+    <div class="jd-section">
+      <div class="jd-section-title">3 · Client / Insurer</div>
+      <div class="jd-field">
+        <label>Client (Insurance Builder / Insurer / Adjuster)</label>
+        <select id="jd_insurer" onchange="syncFromJobDetails('insurer',this.value)">
+          <option value="">— Select client —</option>
+        </select>
+        <div class="jd-hint">Add or remove clients in <strong>Manage → Clients</strong></div>
+      </div>
+      <div class="jd-field">
+        <label>Assessor / Restorer Name</label>
+        <select id="jd_assessorName" onchange="syncFromJobDetails('assessorName',this.value)">
+          <option value="">— Select assessor —</option>
+        </select>
+        <div class="jd-hint">Add or remove assessors in <strong>Manage → Assessors</strong></div>
+      </div>
+    </div>
+
+    <!-- SECTION 4: Dates -->
+    <div class="jd-section">
+      <div class="jd-section-title">4 · Dates</div>
+      <div class="jd-field">
+        <label>Date of Loss</label>
+        <input type="date" id="jd_dateOfLoss" oninput="syncFromJobDetails('dateOfLoss',this.value)"/>
+      </div>
+      <div class="jd-field">
+        <label>Job Date (assessment/quote)</label>
+        <input type="date" id="jd_jobDate" oninput="syncFromJobDetails('jobDate',this.value)"/>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
 <!-- ══ PAGE: CALCULATOR ══ -->
-<div class="page active" id="page-calc">
+<div class="page" id="page-calc">
 <div class="calc-layout">
   <aside class="sidebar">
     <div>
@@ -1098,6 +1221,36 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--cream);color:var(--
           <tbody id="estPricingBody"></tbody>
         </table>
         <div class="notice" style="margin-top:12px">Replacement values shown here are mid-market estimates per item for that category. They are used in the Estimate tab to calculate the total replacement value and savings. The damage multiplier from the Estimate sidebar is applied to the restore price only.</div>
+      </div>
+    </div>
+
+    <!-- Assessors Management -->
+    <div class="admin-card">
+      <div class="admin-card-head">
+        <h3>👤 Assessors / Restorers</h3>
+      </div>
+      <div class="admin-card-body">
+        <p style="font-size:.74rem;color:var(--muted);margin-bottom:10px;line-height:1.5">Names that appear in the <strong>Assessor</strong> dropdown on Job Details, Calculator, and Estimate tabs.</p>
+        <div class="list-mgr" id="assessorsList"></div>
+        <div class="list-mgr-add">
+          <input type="text" id="newAssessor" placeholder="Add new assessor name…" onkeydown="if(event.key==='Enter')addAssessor()"/>
+          <button onclick="addAssessor()">+ Add</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Clients Management -->
+    <div class="admin-card">
+      <div class="admin-card-head">
+        <h3>🏢 Clients (Insurance Builders / Insurers)</h3>
+      </div>
+      <div class="admin-card-body">
+        <p style="font-size:.74rem;color:var(--muted);margin-bottom:10px;line-height:1.5">Companies that appear in the <strong>Client</strong> dropdown on Job Details, Calculator, and Estimate tabs. Pre-populated with common Australian insurance builders, restorers, insurers, and loss adjusters.</p>
+        <div class="list-mgr" id="clientsList"></div>
+        <div class="list-mgr-add">
+          <input type="text" id="newClient" placeholder="Add new client…" onkeydown="if(event.key==='Enter')addClient()"/>
+          <button onclick="addClient()">+ Add</button>
+        </div>
       </div>
     </div>
 
@@ -1521,7 +1674,7 @@ function showPage(id,btn){
   document.getElementById('page-'+id).classList.add('active');
   if(btn)btn.classList.add('active');
   document.getElementById('jobBar').style.display=(id==='calc'||id==='est')?'block':'none';
-  if(id==='admin'){renderAdminTable();syncOHRatesToAdmin();syncTierMultAdmin();loadApiKeyIntoAdmin();renderEstPricingAdmin()}
+  if(id==='admin'){renderAdminTable();syncOHRatesToAdmin();syncTierMultAdmin();loadApiKeyIntoAdmin();renderEstPricingAdmin();renderAssessorsList();renderClientsList()}
   if(id==='brands')renderBrandsTable();
   if(id==='est'){renderEstBlocks();updateEstTotals();updateEstBadge()}
   if(id==='jobs'){renderJobsPage()}
@@ -2504,7 +2657,10 @@ function loadJobFile(event){
   reader.onload=e=>{
     try{
       const data=JSON.parse(e.target.result);
-      if(data.job)Object.entries(data.job).forEach(([k,v])=>{const el=document.getElementById(k);if(el)el.value=v||''});
+      if(data.job)Object.entries(data.job).forEach(([k,v])=>{
+        const el=document.getElementById(k);if(el)el.value=v||'';
+        const jd=document.getElementById('jd_'+k);if(jd)jd.value=v||'';
+      });
       if(data.overheads)Object.entries(data.overheads).forEach(([k,v])=>{const el=document.getElementById(k);if(el)el.value=v||''});
       if(data.settings){
         currentTier=data.settings.tier||1;currentDmgMult=data.settings.dmgMult||1;currentDmgCode=data.settings.dmgCode||'STD';
@@ -3801,7 +3957,10 @@ function loadJobFromHistory(id){
   if(!entry){ alert('Job not found.'); return; }
   const data = entry.data;
   try{
-    if(data.job) Object.entries(data.job).forEach(([k,v])=>{const el=document.getElementById(k);if(el)el.value=v||''});
+    if(data.job) Object.entries(data.job).forEach(([k,v])=>{
+      const el=document.getElementById(k);if(el)el.value=v||'';
+      const jd=document.getElementById('jd_'+k);if(jd)jd.value=v||'';
+    });
     if(data.overheads) Object.entries(data.overheads).forEach(([k,v])=>{const el=document.getElementById(k);if(el)el.value=v||''});
     if(data.settings){
       currentTier=data.settings.tier||1; currentDmgMult=data.settings.dmgMult||1; currentDmgCode=data.settings.dmgCode||'STD';
@@ -3990,9 +4149,264 @@ function importEstPriceList(event){
   else reader.readAsArrayBuffer(file);
 }
 
+// ═══════════════════════════════════════════════════════════════
+//  JOB DETAILS — Master source for all job info
+//  Two-way binding between Job Details tab, Job Bar, and Calculator/Estimate
+// ═══════════════════════════════════════════════════════════════
+
+const JD_FIELDS = ['jobName','jobNum','claimNum','custName','custAddr','insurer','assessorName','dateOfLoss','jobDate'];
+
+// ── Shared sync function — updates ALL instances of a field value
+function syncFieldEverywhere(field, value){
+  // Update Job Details tab
+  const jd = document.getElementById('jd_'+field);
+  if(jd && jd.value !== value) jd.value = value;
+  // Update Job Bar
+  const jb = document.getElementById(field);
+  if(jb && jb.value !== value) jb.value = value;
+  // Update claim ref in header
+  if(field === 'claimNum' || field === 'jobNum') updateRef();
+}
+
+function syncFromJobDetails(field, value){
+  const jb = document.getElementById(field);
+  if(jb) jb.value = value;
+  if(field === 'claimNum' || field === 'jobNum') updateRef();
+}
+
+function syncFromJobBar(field, value){
+  const jd = document.getElementById('jd_'+field);
+  if(jd) jd.value = value;
+}
+
+function clearJobDetails(){
+  if(!confirm('Clear all job details? This will reset the Job Details tab and Calculator/Estimate job fields.')) return;
+  JD_FIELDS.forEach(f=>{
+    const jd = document.getElementById('jd_'+f);
+    const jb = document.getElementById(f);
+    if(jd) jd.value = '';
+    if(jb) jb.value = '';
+  });
+  // Restore today's date in job date
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('jd_jobDate').value = today;
+  document.getElementById('jobDate').value = today;
+  updateRef();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  ASSESSORS LIST — localStorage managed
+// ═══════════════════════════════════════════════════════════════
+const ASSESSORS_KEY = 'ccpro_assessors';
+const DEFAULT_ASSESSORS = ['Russell','David','Andrew','Greg','Josh','Babs'];
+
+function getAssessors(){
+  try{
+    const saved = JSON.parse(localStorage.getItem(ASSESSORS_KEY)||'null');
+    if(Array.isArray(saved) && saved.length > 0) return saved;
+  }catch(e){}
+  return [...DEFAULT_ASSESSORS];
+}
+function setAssessors(arr){
+  try{ localStorage.setItem(ASSESSORS_KEY, JSON.stringify(arr)); }catch(e){}
+}
+
+function addAssessor(){
+  const input = document.getElementById('newAssessor');
+  const name = input.value.trim();
+  if(!name) return;
+  const list = getAssessors();
+  if(list.some(a=>a.toLowerCase()===name.toLowerCase())){
+    alert('"'+name+'" is already on the list.');
+    return;
+  }
+  list.push(name);
+  list.sort((a,b)=>a.localeCompare(b));
+  setAssessors(list);
+  input.value = '';
+  renderAssessorsList();
+  populateAssessorDropdowns();
+}
+
+function removeAssessor(name){
+  if(!confirm('Remove "'+name+'" from the assessors list?')) return;
+  const list = getAssessors().filter(a=>a!==name);
+  setAssessors(list);
+  renderAssessorsList();
+  populateAssessorDropdowns();
+}
+
+function renderAssessorsList(){
+  const container = document.getElementById('assessorsList');
+  if(!container) return;
+  const list = getAssessors();
+  container.innerHTML = list.map(name =>
+    `<div class="list-mgr-item">
+      <span class="lmi-name">${name}</span>
+      <button class="list-mgr-remove" onclick="removeAssessor('${name.replace(/'/g,"\\'")}')">Remove</button>
+    </div>`
+  ).join('') || '<div style="font-size:.76rem;color:var(--muted);text-align:center;padding:14px">No assessors yet.</div>';
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  CLIENTS LIST — localStorage managed (insurance builders, insurers, adjusters)
+// ═══════════════════════════════════════════════════════════════
+const CLIENTS_KEY = 'ccpro_clients';
+const DEFAULT_CLIENTS = [
+  // Insurance Builders — Johns Lyng Group
+  'Johns Lyng Group',
+  'Johns Lyng Insurance Builders',
+  'Makesafe Builders',
+  'RestorX Services',
+  'Express Builders',
+  'Regional Builders (Johns Lyng)',
+  'A1 Services',
+  // Other major insurance builders / restorers
+  'Stream Building Group',
+  'BMS Building Maintenance Services',
+  'MyChoice Property & Restoration',
+  'Aus-Wide Building Solutions',
+  'Premier Insurance Builders',
+  'Paterson Simons',
+  'Coversure',
+  // Restoration specialists
+  'Steamatic',
+  'Steamatic Australia',
+  'ServiceMaster Restore',
+  'Rainbow International',
+  'Enviroclean',
+  'Paul Davis Restoration',
+  'Forge Solutions',
+  'PuroClean Australia',
+  'Servpro Australia',
+  // Major insurers
+  'AAMI',
+  'Allianz Australia',
+  'QBE Insurance',
+  'Suncorp',
+  'NRMA Insurance',
+  'Youi',
+  'Hollard Insurance',
+  'RACV',
+  'IAG',
+  'Budget Direct',
+  'Bingle',
+  'GIO',
+  'CGU',
+  'Vero Insurance',
+  // Loss adjusters
+  'Crawford & Company',
+  'Gallagher Bassett',
+  'Sedgwick',
+  'McLarens',
+  'Charles Taylor Adjusting',
+  'Cunningham Lindsey',
+  // Other
+  'Other / Direct Customer',
+];
+
+function getClients(){
+  try{
+    const saved = JSON.parse(localStorage.getItem(CLIENTS_KEY)||'null');
+    if(Array.isArray(saved) && saved.length > 0) return saved;
+  }catch(e){}
+  return [...DEFAULT_CLIENTS].sort((a,b)=>a.localeCompare(b));
+}
+function setClients(arr){
+  try{ localStorage.setItem(CLIENTS_KEY, JSON.stringify(arr)); }catch(e){}
+}
+
+function addClient(){
+  const input = document.getElementById('newClient');
+  const name = input.value.trim();
+  if(!name) return;
+  const list = getClients();
+  if(list.some(c=>c.toLowerCase()===name.toLowerCase())){
+    alert('"'+name+'" is already on the list.');
+    return;
+  }
+  list.push(name);
+  list.sort((a,b)=>a.localeCompare(b));
+  setClients(list);
+  input.value = '';
+  renderClientsList();
+  populateClientDropdowns();
+}
+
+function removeClient(name){
+  if(!confirm('Remove "'+name+'" from the clients list?')) return;
+  const list = getClients().filter(c=>c!==name);
+  setClients(list);
+  renderClientsList();
+  populateClientDropdowns();
+}
+
+function renderClientsList(){
+  const container = document.getElementById('clientsList');
+  if(!container) return;
+  const list = getClients();
+  container.innerHTML = list.map(name =>
+    `<div class="list-mgr-item">
+      <span class="lmi-name">${name}</span>
+      <button class="list-mgr-remove" onclick="removeClient('${name.replace(/'/g,"\\'")}')">Remove</button>
+    </div>`
+  ).join('') || '<div style="font-size:.76rem;color:var(--muted);text-align:center;padding:14px">No clients yet.</div>';
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  DROPDOWN POPULATION — keep all assessor and client dropdowns in sync
+// ═══════════════════════════════════════════════════════════════
+function populateAssessorDropdowns(){
+  const assessors = getAssessors();
+  ['assessorName','jd_assessorName'].forEach(id=>{
+    const sel = document.getElementById(id);
+    if(!sel) return;
+    const current = sel.value;
+    sel.innerHTML = '<option value="">— Select assessor —</option>' +
+      assessors.map(a=>`<option value="${a}">${a}</option>`).join('');
+    // Restore current value even if not in new list
+    if(current){
+      if(assessors.includes(current)) sel.value = current;
+      else { // preserve old value as an option
+        const opt = document.createElement('option');
+        opt.value = current; opt.textContent = current+' (removed)';
+        sel.appendChild(opt);
+        sel.value = current;
+      }
+    }
+  });
+}
+
+function populateClientDropdowns(){
+  const clients = getClients();
+  ['insurer','jd_insurer'].forEach(id=>{
+    const sel = document.getElementById(id);
+    if(!sel) return;
+    const current = sel.value;
+    sel.innerHTML = '<option value="">— Select client —</option>' +
+      clients.map(c=>`<option value="${c}">${c}</option>`).join('');
+    if(current){
+      if(clients.includes(current)) sel.value = current;
+      else {
+        const opt = document.createElement('option');
+        opt.value = current; opt.textContent = current+' (removed)';
+        sel.appendChild(opt);
+        sel.value = current;
+      }
+    }
+  });
+}
+
 // ─── Init ─────────────────────────────────────────────────────
 populateCatFilter();renderItems();
-document.getElementById('jobDate').value=new Date().toISOString().slice(0,10);
+// Populate dropdowns before setting defaults
+populateAssessorDropdowns();
+populateClientDropdowns();
+// Default today's date in both Job Details and Job Bar
+const _today = new Date().toISOString().slice(0,10);
+document.getElementById('jobDate').value = _today;
+const _jdDate = document.getElementById('jd_jobDate');
+if(_jdDate) _jdDate.value = _today;
 renderTierMultPreview();
 // Restore saved API key from localStorage
 try{
