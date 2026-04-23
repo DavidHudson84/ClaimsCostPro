@@ -242,6 +242,22 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--cream);color:var(--
 .onedrive-box ol{padding-left:16px;color:#444;line-height:1.8}
 .onedrive-box li{font-size:.75rem}
 
+/* ── PDF Options Modal ── */
+.pdf-preset-grid{display:flex;flex-direction:column;gap:8px;margin-bottom:8px}
+.pdf-preset{cursor:pointer;display:block;position:relative}
+.pdf-preset input[type=radio]{position:absolute;opacity:0;pointer-events:none}
+.pdf-preset-card{border:2px solid var(--line);border-radius:9px;padding:12px 14px;transition:all .15s;background:#fff;display:flex;gap:12px;align-items:flex-start}
+.pdf-preset:hover .pdf-preset-card{border-color:var(--mid)}
+.pdf-preset input[type=radio]:checked ~ .pdf-preset-card{border-color:var(--amber);background:#FFFBF0;box-shadow:0 2px 8px rgba(232,160,32,.18)}
+.pdf-preset-icon{font-size:1.5rem;flex-shrink:0;line-height:1}
+.pdf-preset-name{font-size:.92rem;font-weight:700;color:var(--navy);margin-bottom:2px}
+.pdf-preset-desc{font-size:.72rem;color:var(--muted);line-height:1.5}
+.pdf-sections-box{background:var(--warm);border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin-top:10px}
+.pdf-sections-title{font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.pdf-section-check{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:.82rem;color:var(--ink);cursor:pointer}
+.pdf-section-check input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:var(--amber)}
+.pdf-section-check:hover{color:var(--navy)}
+
 /* ── Tier Finder page ── */
 .tier-layout{padding:24px;max-width:1100px;margin:0 auto}
 .tier-page-header{margin-bottom:20px}
@@ -1488,6 +1504,53 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--cream);color:var(--
   </div>
 </div>
 
+<!-- ══ PDF OPTIONS MODAL ══ -->
+<div class="modal-backdrop" id="pdfOptionsModal">
+  <div class="modal" style="max-width:540px">
+    <h3 id="pdfOptsTitle">📄 Report Options</h3>
+    <p style="margin-bottom:14px">Choose what to include in your PDF report.</p>
+
+    <div class="pdf-preset-grid">
+      <label class="pdf-preset">
+        <input type="radio" name="pdfPreset" value="simple" onchange="updatePdfPresetUI()"/>
+        <div class="pdf-preset-card">
+          <div class="pdf-preset-icon">📋</div>
+          <div class="pdf-preset-name">Simple</div>
+          <div class="pdf-preset-desc">1-page summary. Job info, totals, and verdict only — great for quick insurer approvals.</div>
+        </div>
+      </label>
+
+      <label class="pdf-preset">
+        <input type="radio" name="pdfPreset" value="detailed" checked onchange="updatePdfPresetUI()"/>
+        <div class="pdf-preset-card">
+          <div class="pdf-preset-icon">📑</div>
+          <div class="pdf-preset-name">Detailed</div>
+          <div class="pdf-preset-desc">Full report with all sections including itemised breakdown, overheads, and brand comparables.</div>
+        </div>
+      </label>
+
+      <label class="pdf-preset">
+        <input type="radio" name="pdfPreset" value="custom" onchange="updatePdfPresetUI()"/>
+        <div class="pdf-preset-card">
+          <div class="pdf-preset-icon">⚙️</div>
+          <div class="pdf-preset-name">Custom</div>
+          <div class="pdf-preset-desc">Choose exactly which sections to include.</div>
+        </div>
+      </label>
+    </div>
+
+    <div id="pdfSectionsBox" class="pdf-sections-box" style="display:none">
+      <div class="pdf-sections-title">Include these sections:</div>
+      <div id="pdfSectionsList"></div>
+    </div>
+
+    <div class="modal-actions" style="margin-top:16px">
+      <button class="modal-btn amber" onclick="generatePdfWithOptions()">📄 Generate PDF</button>
+      <button class="modal-btn ghost" onclick="closePdfOptionsModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ SAVE MODAL ══ -->
 <div class="modal-backdrop" id="saveModal">
   <div class="modal">
@@ -1876,6 +1939,12 @@ function fmt(n){return'$'+Math.round(n).toLocaleString('en-AU')}
 
 // ─── PDF REPORT EXPORT ───────────────────────────────────────
 function exportReportPDF(){
+  // Open the PDF options modal instead of generating immediately
+  if(!lastReport){alert('Please generate a report first.');return}
+  openPdfOptionsModal('calc');
+}
+
+function _exportReportPDF_run(opts){
   if(!lastReport){alert('Please generate a report first.');return}
   const r=lastReport;
   const tierColors=['#2E7D32','#BF6F00','#BF360C','#4A148C','#0D47A1'];
@@ -2058,7 +2127,7 @@ function exportReportPDF(){
   @media print{
     body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   }
-
+</style>
 </head>
 <body>
 
@@ -2272,8 +2341,11 @@ function exportReportPDF(){
 <script>window.onload=function(){window.print()}<\/script>
 </body></html>`;
 
+  // Filter sections based on opts
+  const filteredHtml = filterCalcSections(html, opts||{mode:'detailed'});
+
   // Open PDF in new tab using Blob URL (works on all browsers, file:// and https://)
-  const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+  const blob = new Blob([filteredHtml], {type:'text/html;charset=utf-8'});
   const url  = URL.createObjectURL(blob);
   const pw   = window.open(url, '_blank');
   if(!pw){
@@ -2286,6 +2358,60 @@ function exportReportPDF(){
   }
   // Revoke after a short delay to free memory
   setTimeout(()=>URL.revokeObjectURL(url), 60000);
+}
+
+// ─── Filter Calculator PDF sections based on options ──────────
+function filterCalcSections(html, opts){
+  // Each section is bracketed by its HTML comment marker — split on those
+  const sectionMarkers = [
+    {id:'s1', marker:'<!-- ══ SECTION 1: JOB INFORMATION ══ -->'},
+    {id:'s2', marker:'<!-- ══ SECTION 2: DAMAGE TYPE ══ -->'},
+    {id:'s3', marker:'<!-- ══ SECTION 3: REPLACEMENT TIER & BRANDS ══ -->'},
+    {id:'s4', marker:'<!-- ══ SECTION 4: ITEMS — RESTORATION vs REPLACEMENT ══ -->'},
+    {id:'s5', marker:'<!-- ══ SECTION 5: OVERHEADS ══ -->'},
+    {id:'s6', marker:'<!-- ══ SECTION 6: RESTORATION COST SUMMARY ══ -->'},
+    {id:'s7', marker:'<!-- ══ SECTION 7: REPLACEMENT COST SUMMARY ══ -->'},
+    {id:'s8', marker:'<!-- ══ SECTION 8: RESTORATION vs REPLACEMENT ══ -->'},
+    {id:'footer', marker:'<!-- ══ FOOTER ══ -->'},
+  ];
+
+  // Decide which sections to keep
+  let keep;
+  if(opts.mode==='simple'){
+    keep = {s1:true, s2:true, s3:false, s4:false, s5:false, s6:false, s7:false, s8:true, footer:true};
+  } else if(opts.mode==='custom'){
+    keep = opts.sections || {};
+    keep.footer = true;
+  } else {
+    // detailed — include all
+    keep = {s1:true,s2:true,s3:true,s4:true,s5:true,s6:true,s7:true,s8:true,footer:true};
+  }
+
+  // Split html at each marker; each piece contains the section after its marker
+  let result = '';
+  let remaining = html;
+  let headerEndIdx = remaining.indexOf(sectionMarkers[0].marker);
+  // Everything before section 1 is the header — always keep
+  result += remaining.substring(0, headerEndIdx);
+  remaining = remaining.substring(headerEndIdx);
+
+  for(let i=0; i<sectionMarkers.length; i++){
+    const cur = sectionMarkers[i];
+    const next = sectionMarkers[i+1];
+    const curStart = remaining.indexOf(cur.marker);
+    if(curStart < 0) continue;
+    const nextStart = next ? remaining.indexOf(next.marker, curStart+1) : -1;
+    const sectionBlock = nextStart > 0
+      ? remaining.substring(curStart, nextStart)
+      : remaining.substring(curStart);
+    if(keep[cur.id] !== false){
+      result += sectionBlock;
+    }
+    remaining = nextStart > 0 ? remaining.substring(nextStart) : '';
+  }
+  // Append anything left (closing tags, script, etc.)
+  result += remaining;
+  return result;
 }
 
 // ─── EXCEL EXPORT — Report ────────────────────────────────────
@@ -3318,7 +3444,7 @@ function generateEstReport(){
       <button class="rpt-btn pdf" onclick="printEstReport()">📄 Print / PDF</button>
       <button class="rpt-btn excel" onclick="exportEstExcel()">📊 Excel</button>
     </div>
-    <div class="report-header">
+    <div class="report-header pdf-section-header">
       <div class="rh-field"><div class="rh-label">Job Name</div><div class="rh-value">${job.jobName||'—'}</div></div>
       <div class="rh-field"><div class="rh-label">Customer</div><div class="rh-value">${job.custName||'—'}</div></div>
       <div class="rh-field"><div class="rh-label">Address</div><div class="rh-value">${job.custAddr||'—'}</div></div>
@@ -3329,18 +3455,18 @@ function generateEstReport(){
       <div class="rh-field"><div class="rh-label">Job Date</div><div class="rh-value">${job.jobDate||'—'}</div></div>
       <div class="rh-field"><div class="rh-label">Assessor</div><div class="rh-value">${job.assessorName||'—'}</div></div>
     </div>
-    <p style="font-size:.74rem;color:var(--muted);margin-bottom:14px">
+    <p class="pdf-section-summary" style="font-size:.74rem;color:var(--muted);margin-bottom:14px">
       <strong>RESTORATION ESTIMATE</strong> &nbsp;·&nbsp; T${estTier} ${EST_TIER_NAMES[estTier-1]} tier &nbsp;·&nbsp;
       ${dmgNames[estDmgCode]} ×${estDmgMult.toFixed(2)} &nbsp;·&nbsp; ${tots.qty} items
     </p>
-    <div class="claim-bar">
+    <div class="claim-bar pdf-section-totals">
       <div class="claim-cell"><div class="claim-cell-label">Total Items</div><div class="claim-cell-value">${tots.qty}</div><div class="claim-cell-sub">Across all categories</div></div>
       <div class="claim-cell"><div class="claim-cell-label">Restoration Cost</div><div class="claim-cell-value">${fmtAU(tots.restore)}</div><div class="claim-cell-sub">After ×${estDmgMult.toFixed(2)} multiplier</div></div>
       <div class="claim-cell"><div class="claim-cell-label">Replacement Value</div><div class="claim-cell-value">${fmtAU(tots.repl)}</div><div class="claim-cell-sub">T${estTier} ${EST_TIER_NAMES[estTier-1]} tier</div></div>
       <div class="claim-cell highlight"><div class="claim-cell-label">Client Saving</div><div class="claim-cell-value">${fmtAU(tots.saving)}</div><div class="claim-cell-sub">vs full replacement</div></div>
       <div class="claim-cell highlight"><div class="claim-cell-label">Restore %</div><div class="claim-cell-value">${pct.toFixed(1)}%</div><div class="claim-cell-sub">of replacement value</div></div>
     </div>
-    <div style="margin-bottom:16px">
+    <div class="pdf-section-ratio" style="margin-bottom:16px">
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px">
         <span style="font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">Restoration as % of Replacement</span>
         <span style="font-size:.68rem;color:var(--muted)">Target: 10–25%</span>
@@ -3352,11 +3478,11 @@ function generateEstReport(){
         <div class="ratio-legend-item"><div class="rl-dot" style="background:#B71C1C"></div>&gt;40% Reassess</div>
       </div>
     </div>
-    <div class="verdict-strip ${vClass}" style="margin-bottom:16px">
+    <div class="verdict-strip pdf-section-verdict ${vClass}" style="margin-bottom:16px">
       <div class="verdict-icon">${vIcon}</div>
       <div><div class="verdict-head">${vHead}</div><div class="verdict-body">${vBody}</div></div>
     </div>
-    <div class="table-wrap" style="margin-bottom:${notes?'16px':'0'}">
+    <div class="table-wrap pdf-section-items" style="margin-bottom:${notes?'16px':'0'}">
       <table class="breakdown-tbl">
         <thead><tr>
           <th>Item</th><th class="r">Qty</th><th class="r">Restore/unit</th>
@@ -3365,15 +3491,61 @@ function generateEstReport(){
         <tbody>${tRows}</tbody>
       </table>
     </div>
-    ${notes?`<div style="background:white;border:1px solid var(--line);border-radius:9px;padding:14px 16px"><div style="font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Notes</div><div style="font-size:.8rem;white-space:pre-wrap">${notes}</div></div>`:''}`;
+    ${notes?`<div class="pdf-section-notes" style="background:white;border:1px solid var(--line);border-radius:9px;padding:14px 16px"><div style="font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Notes</div><div style="font-size:.8rem;white-space:pre-wrap">${notes}</div></div>`:''}`;
 
   const z = document.getElementById('estResultZone');
   z.style.display='block'; z.innerHTML=html;
   z.scrollIntoView({behavior:'smooth'});
 }
 
-// ── Print Estimate PDF ────────────────────────────────────────
+// ─── Filter Estimate PDF sections based on options ────────────
+function filterEstSections(reportHTML, opts){
+  // Create a DOM parser to manipulate the report HTML
+  const wrap = document.createElement('div');
+  wrap.innerHTML = reportHTML;
+
+  let keep;
+  if(opts.mode==='simple'){
+    keep = {header:true, summary:true, totals:true, ratio:true, verdict:true, items:false, notes:false};
+  } else if(opts.mode==='custom'){
+    keep = opts.sections || {};
+  } else {
+    keep = {header:true, summary:true, totals:true, ratio:true, verdict:true, items:true, notes:true};
+  }
+
+  // Each section has a pdf-section-* marker class; remove the ones we don't want
+  const sectionMap = {
+    header:  '.pdf-section-header',
+    summary: '.pdf-section-summary',
+    totals:  '.pdf-section-totals',
+    ratio:   '.pdf-section-ratio',
+    verdict: '.pdf-section-verdict',
+    items:   '.pdf-section-items',
+    notes:   '.pdf-section-notes',
+  };
+
+  Object.keys(sectionMap).forEach(key=>{
+    if(keep[key] === false){
+      const el = wrap.querySelector(sectionMap[key]);
+      if(el) el.remove();
+    }
+  });
+
+  return wrap.innerHTML;
+}
+
+
 function printEstReport(){
+  const z = document.getElementById('estResultZone');
+  if(!z || z.style.display==='none' || !z.innerHTML.trim()){
+    alert('Please generate the estimate report first, then click Print PDF.');
+    return;
+  }
+  // Open the PDF options modal instead of generating immediately
+  openPdfOptionsModal('est');
+}
+
+function _printEstReport_run(opts){
   const z = document.getElementById('estResultZone');
   if(!z || z.style.display==='none' || !z.innerHTML.trim()){
     alert('Please generate the estimate report first, then click Print PDF.');
@@ -3387,9 +3559,11 @@ function printEstReport(){
     custName:    gv('custName'),
     jobName:     gv('jobName'),
   };
-  // Strip the action buttons from the report HTML
-  const reportHTML = z.innerHTML
+  // Strip the action buttons from the report HTML, then apply section filter
+  let reportHTML = z.innerHTML
     .replace(/<div class="report-actions"[\s\S]*?<\/div>\s*(<\/div>)?/,'');
+
+  reportHTML = filterEstSections(reportHTML, opts||{mode:'detailed'});
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -4395,6 +4569,95 @@ function populateClientDropdowns(){
       }
     }
   });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  PDF OPTIONS MODAL — Simple / Detailed / Custom
+// ═══════════════════════════════════════════════════════════════
+
+let _pdfContext = 'calc'; // 'calc' or 'est'
+
+const CALC_SECTIONS = [
+  {id:'s1', label:'1. Job Information'},
+  {id:'s2', label:'2. Damage Type & Assessment Basis'},
+  {id:'s3', label:'3. Replacement Tier Summary & Brands'},
+  {id:'s4', label:'4. Itemised Restoration & Replacement Costs'},
+  {id:'s5', label:'5. Overhead Costs'},
+  {id:'s6', label:'6. Restoration Cost Summary'},
+  {id:'s7', label:'7. Replacement Cost Summary'},
+  {id:'s8', label:'8. Target Zone Assessment & Verdict'},
+];
+
+const EST_SECTIONS = [
+  {id:'header',  label:'Job Header (customer, claim #, dates)'},
+  {id:'summary', label:'Summary Line (tier, damage, item count)'},
+  {id:'totals',  label:'Claim Totals Bar (restoration, replacement, saving)'},
+  {id:'ratio',   label:'Ratio Bar (% of replacement)'},
+  {id:'verdict', label:'Target Zone Verdict'},
+  {id:'items',   label:'Itemised Breakdown Table'},
+  {id:'notes',   label:'Notes'},
+];
+
+function openPdfOptionsModal(context){
+  _pdfContext = context;
+  const title = context==='est' ? '📄 Estimate Report Options' : '📄 Calculator Report Options';
+  document.getElementById('pdfOptsTitle').textContent = title;
+
+  // Reset to Detailed preset
+  document.querySelector('input[name="pdfPreset"][value="detailed"]').checked = true;
+  updatePdfPresetUI();
+
+  document.getElementById('pdfOptionsModal').classList.add('open');
+}
+
+function closePdfOptionsModal(){
+  document.getElementById('pdfOptionsModal').classList.remove('open');
+}
+
+function updatePdfPresetUI(){
+  const preset = document.querySelector('input[name="pdfPreset"]:checked').value;
+  const box = document.getElementById('pdfSectionsBox');
+  const list = document.getElementById('pdfSectionsList');
+
+  if(preset !== 'custom'){
+    box.style.display = 'none';
+    return;
+  }
+
+  // Render the checklist for the current context
+  const sections = _pdfContext === 'est' ? EST_SECTIONS : CALC_SECTIONS;
+  list.innerHTML = sections.map(s=>
+    `<label class="pdf-section-check">
+      <input type="checkbox" data-section="${s.id}" checked/>
+      <span>${s.label}</span>
+    </label>`
+  ).join('');
+  box.style.display = 'block';
+}
+
+function generatePdfWithOptions(){
+  const preset = document.querySelector('input[name="pdfPreset"]:checked').value;
+
+  let opts;
+  if(preset === 'custom'){
+    const sections = {};
+    document.querySelectorAll('#pdfSectionsList input[type=checkbox]').forEach(cb=>{
+      sections[cb.dataset.section] = cb.checked;
+    });
+    opts = {mode:'custom', sections};
+  } else {
+    opts = {mode: preset};
+  }
+
+  closePdfOptionsModal();
+  // Small delay so the modal close animation completes before opening the PDF tab
+  setTimeout(()=>{
+    if(_pdfContext === 'est'){
+      _printEstReport_run(opts);
+    } else {
+      _exportReportPDF_run(opts);
+    }
+  }, 100);
 }
 
 // ─── Init ─────────────────────────────────────────────────────
