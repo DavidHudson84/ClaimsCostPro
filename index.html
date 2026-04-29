@@ -871,6 +871,19 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--cream);color:var(--
 .env-source-pill.active{border-color:var(--amber);background:#FFFBF0}
 .env-source-pill .esp-name{font-size:.78rem;font-weight:700;color:var(--ink)}
 .env-source-pill .esp-meta{font-size:.66rem;color:var(--muted);margin-top:2px}
+
+/* ── Report Authors (Manage tab + Reports picker) ── */
+.author-row{display:grid;grid-template-columns:1.4fr 1.4fr 1.2fr 1.6fr 0.7fr auto;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}
+.author-row input,.author-row select{padding:6px 8px;border:1.5px solid var(--line);border-radius:5px;font-size:.74rem;font-family:'IBM Plex Sans',sans-serif;background:#fff}
+.author-row input:focus,.author-row select:focus{outline:none;border-color:var(--amber)}
+.author-row .ar-rm{padding:5px 10px;background:#FFEBEE;color:#B71C1C;border:none;border-radius:5px;cursor:pointer;font-size:.72rem;font-weight:600}
+.author-row .ar-rm:hover{background:#FFCDD2}
+.author-row-header{display:grid;grid-template-columns:1.4fr 1.4fr 1.2fr 1.6fr 0.7fr auto;gap:6px;font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:4px 0;border-bottom:1.5px solid var(--ink)}
+
+.author-picker{display:flex;align-items:center;gap:10px;background:#fff;border:1.5px solid var(--line);border-radius:8px;padding:8px 12px;flex-wrap:wrap}
+.author-picker-label{font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.author-picker select{padding:6px 10px;border:1.5px solid var(--line);border-radius:6px;font-size:.78rem;font-family:'IBM Plex Sans',sans-serif;background:#fff;color:var(--ink);min-width:200px}
+.author-preview{font-size:.7rem;color:var(--muted);margin-left:8px}
 </style>
 </head>
 <body>
@@ -1301,6 +1314,12 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--cream);color:var(--
       <div class="brand-picker-pills" id="reportsBrandPills"></div>
     </div>
 
+    <div class="author-picker" style="margin-bottom:18px" id="reportsAuthorPicker">
+      <div class="author-picker-label">Sign-off / Report Author</div>
+      <select id="reportsAuthorSelect" onchange="setActiveAuthor(this.value)"></select>
+      <span class="author-preview" id="reportsAuthorPreview"></span>
+    </div>
+
     <div class="reports-grid">
       <button class="report-card" onclick="openReportPanel('calc')">
         <div class="rc-icon">⚡</div>
@@ -1640,6 +1659,24 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--cream);color:var(--
       </div>
     </div>
 
+    <!-- Report Authors Management -->
+    <div class="admin-card" style="grid-column:1/-1">
+      <div class="admin-card-head">
+        <h3>✍️ Report Authors / Sign-off Contacts</h3>
+      </div>
+      <div class="admin-card-body">
+        <p style="font-size:.74rem;color:var(--muted);margin-bottom:10px;line-height:1.5">People who can sign off on reports. The selected author appears in the <strong>"Report prepared by"</strong> block at the end of every PDF, with their contact details. Tag each author to a brand (or leave as <em>Any</em>) so the right contact appears next to the right brand.</p>
+        <div class="author-row-header">
+          <div>Name</div><div>Role / Title</div><div>Phone</div><div>Email</div><div>Brand</div><div></div>
+        </div>
+        <div id="authorsList"></div>
+        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+          <button onclick="addAuthor()" style="padding:8px 14px;background:var(--amber);color:var(--ink);border:none;border-radius:6px;font-weight:600;cursor:pointer;font-family:'IBM Plex Sans',sans-serif">+ Add Author</button>
+          <button onclick="resetAuthorsToDefault()" style="padding:8px 14px;background:#fff;color:var(--ink);border:1.5px solid var(--line);border-radius:6px;font-weight:600;cursor:pointer;font-family:'IBM Plex Sans',sans-serif">Reset to defaults</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Multipliers -->
     <div class="admin-card">
       <div class="admin-card-head"><h3>Damage Multipliers</h3></div>
@@ -1919,6 +1956,12 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--cream);color:var(--
       <div class="brand-picker-pills" id="pdfBrandPills"></div>
     </div>
 
+    <div class="author-picker" style="margin-top:10px">
+      <div class="author-picker-label">Sign-off / Report Author</div>
+      <select id="pdfAuthorSelect" onchange="setActiveAuthor(this.value)"></select>
+      <span class="author-preview" id="pdfAuthorPreview"></span>
+    </div>
+
     <label class="pdf-section-check" style="margin-top:14px;display:flex;align-items:flex-start;gap:8px;background:#F1F8F4;border-left:3px solid #2E7D32;padding:10px 12px;border-radius:5px;cursor:pointer">
       <input type="checkbox" id="pdfEnvCheck" style="margin-top:3px"/>
       <span style="font-size:.78rem;color:#1B5E20;line-height:1.45">
@@ -2120,8 +2163,8 @@ function showPage(id,btn){
   document.getElementById('page-'+id).classList.add('active');
   if(btn)btn.classList.add('active');
   document.getElementById('jobBar').style.display=(id==='calc'||id==='est')?'block':'none';
-  if(id==='admin'){renderAdminTable();syncOHRatesToAdmin();syncTierMultAdmin();loadApiKeyIntoAdmin();renderEstPricingAdmin();renderAssessorsList();renderClientsList();renderBrandSelector()}
-  if(id==='reports'){ if(typeof renderInlineBrandPicker==='function') renderInlineBrandPicker('reportsBrandPills'); }
+  if(id==='admin'){renderAdminTable();syncOHRatesToAdmin();syncTierMultAdmin();loadApiKeyIntoAdmin();renderEstPricingAdmin();renderAssessorsList();renderClientsList();renderBrandSelector();renderAuthorsList()}
+  if(id==='reports'){ if(typeof renderInlineBrandPicker==='function') renderInlineBrandPicker('reportsBrandPills'); if(typeof renderAuthorSelect==='function') renderAuthorSelect('reportsAuthorSelect'); }
   if(id==='brands')renderBrandsTable();
   if(id==='est'){renderEstBlocks();updateEstTotals();updateEstBadge()}
   if(id==='jobs'){renderJobsPage()}
@@ -2773,6 +2816,8 @@ function _exportReportPDF_run(opts){
 </div>
 
 ${opts && opts.environmental ? buildEnvSection(b, r.rows.reduce((a,rw)=>a+rw.qty,0), r.totalRepl, 'calc') : ''}
+
+${buildSignOffBlock(b)}
 
 <!-- ══ FOOTER ══ -->
 <div class="report-footer">
@@ -4112,6 +4157,8 @@ function _printEstReport_run(opts){
 
   ${opts && opts.environmental ? buildEnvSection(b, _estItemCount(), _estReplValue(), 'est') : ''}
 
+  ${buildSignOffBlock(b)}
+
   <div class="est-pdf-footer">
     <span>${b.footer}</span>
     <span>Claim: ${job.claimNum||'—'} · Job: ${job.jobNum||'—'} · ${new Date().toLocaleString('en-AU')}</span>
@@ -5150,6 +5197,7 @@ function openPdfOptionsModal(context){
   document.querySelector('input[name="pdfPreset"][value="detailed"]').checked = true;
   updatePdfPresetUI();
   if(typeof renderInlineBrandPicker==='function') renderInlineBrandPicker('pdfBrandPills');
+  if(typeof renderAuthorSelect==='function') renderAuthorSelect('pdfAuthorSelect');
 
   document.getElementById('pdfOptionsModal').classList.add('open');
 }
@@ -5473,6 +5521,8 @@ body{font-family:'Helvetica Neue',Arial,sans-serif;font-size:9pt;color:#111;line
   <div class="section-head">3 — Non-Restorable Items (${photos.length} item${photos.length!==1?'s':''})</div>
   ${photoHTML}
 
+  ${buildSignOffBlock(b)}
+
   <div class="report-footer">
     <span>${b.footer}</span>
     <span>Claim: ${job.claimNum||'—'} · Job: ${job.jobNum||'—'} · Generated: ${new Date().toLocaleString('en-AU')}</span>
@@ -5610,6 +5660,8 @@ body{font-family:'Helvetica Neue',Arial,sans-serif;font-size:9pt;color:#111;line
 
   <div class="section-head">${includePricing?'5':'4'} — Photo Documentation (${photos.length})</div>
   <div class="ins-photo-grid">${photoHTML}</div>
+
+  ${buildSignOffBlock(b)}
 
   <div class="report-footer">
     <span>${b.footer}</span>
@@ -6019,6 +6071,8 @@ body{font-family:'Helvetica Neue',Arial,sans-serif;font-size:9pt;color:#111;line
     <p style="margin-top:6px">Actual figures vary by fibre composition, construction, and manufacturing origin. The estimates above use mid-range industry-published values and should be treated as directional rather than precise.</p>
   </div>
 
+  ${buildSignOffBlock(b)}
+
   <div class="report-footer">
     <span>${b.footer}</span>
     <span>Claim: ${job.claimNum||'—'} · Job: ${job.jobNum||'—'} · Generated: ${new Date().toLocaleString('en-AU')}</span>
@@ -6046,6 +6100,170 @@ openReportPanel = function(which){
     recomputeEnvPreview();
   }
 };
+
+// ═══════════════════════════════════════════════════════════════
+//  REPORT AUTHORS — sign-off contacts
+// ═══════════════════════════════════════════════════════════════
+const AUTHORS_KEY        = 'ccpro_authors';
+const ACTIVE_AUTHOR_KEY  = 'ccpro_active_author';
+
+const DEFAULT_AUTHORS = [
+  { id: 'dave',    name: 'David Hudson', role: 'Director',                  phone: '',           email: 'david@hudsongroup.com.au', brandId: 'any' },
+  { id: 'russell', name: 'Russell',      role: 'Senior Restorer',           phone: '',           email: '',                          brandId: 'any' },
+  { id: 'andrew',  name: 'Andrew',       role: 'Restoration Coordinator',   phone: '',           email: '',                          brandId: 'any' },
+];
+
+function getAuthors(){
+  try{
+    const saved = JSON.parse(localStorage.getItem(AUTHORS_KEY)||'null');
+    if(Array.isArray(saved)) return saved;
+  }catch(e){}
+  return JSON.parse(JSON.stringify(DEFAULT_AUTHORS));
+}
+function setAuthors(arr){
+  try{ localStorage.setItem(AUTHORS_KEY, JSON.stringify(arr)); }catch(e){}
+}
+function getActiveAuthorId(){
+  return localStorage.getItem(ACTIVE_AUTHOR_KEY) || 'dave';
+}
+function setActiveAuthor(id){
+  localStorage.setItem(ACTIVE_AUTHOR_KEY, id);
+  // Re-render every author picker that exists
+  ['reportsAuthorSelect','pdfAuthorSelect'].forEach(renderAuthorSelect);
+}
+function getActiveAuthor(){
+  const list = getAuthors();
+  const id = getActiveAuthorId();
+  return list.find(a=>a.id===id) || list[0] || null;
+}
+function genAuthorId(){ return 'auth_'+Date.now()+'_'+Math.random().toString(36).slice(2,5); }
+
+function renderAuthorsList(){
+  const wrap = document.getElementById('authorsList');
+  if(!wrap) return;
+  const list = getAuthors();
+  if(!list.length){
+    wrap.innerHTML = '<div style="font-style:italic;color:var(--muted);padding:10px 0;font-size:.78rem">No authors yet. Click "+ Add Author" to add one.</div>';
+    return;
+  }
+  wrap.innerHTML = list.map((a,i)=>`
+    <div class="author-row">
+      <input type="text" placeholder="Name" value="${escapeHtml(a.name)}" oninput="updateAuthorField('${a.id}','name',this.value)"/>
+      <input type="text" placeholder="Role / Title" value="${escapeHtml(a.role||'')}" oninput="updateAuthorField('${a.id}','role',this.value)"/>
+      <input type="tel"  placeholder="Phone" value="${escapeHtml(a.phone||'')}" oninput="updateAuthorField('${a.id}','phone',this.value)"/>
+      <input type="email" placeholder="Email" value="${escapeHtml(a.email||'')}" oninput="updateAuthorField('${a.id}','email',this.value)"/>
+      <select onchange="updateAuthorField('${a.id}','brandId',this.value)">
+        <option value="any" ${a.brandId==='any'||!a.brandId?'selected':''}>Any</option>
+        <option value="coathanger" ${a.brandId==='coathanger'?'selected':''}>Coathanger</option>
+        <option value="master" ${a.brandId==='master'?'selected':''}>Master</option>
+      </select>
+      <button class="ar-rm" onclick="removeAuthor('${a.id}')">Remove</button>
+    </div>
+  `).join('');
+}
+
+function updateAuthorField(id, field, value){
+  const list = getAuthors();
+  const a = list.find(x=>x.id===id);
+  if(!a) return;
+  a[field] = value;
+  setAuthors(list);
+  // refresh pickers if open
+  ['reportsAuthorSelect','pdfAuthorSelect'].forEach(renderAuthorSelect);
+}
+
+function addAuthor(){
+  const list = getAuthors();
+  list.push({id:genAuthorId(), name:'', role:'', phone:'', email:'', brandId:'any'});
+  setAuthors(list);
+  renderAuthorsList();
+}
+
+function removeAuthor(id){
+  if(!confirm('Remove this author?')) return;
+  const list = getAuthors().filter(a=>a.id!==id);
+  setAuthors(list);
+  if(getActiveAuthorId()===id && list.length){ setActiveAuthor(list[0].id); }
+  renderAuthorsList();
+}
+
+function resetAuthorsToDefault(){
+  if(!confirm('Reset author list to the default? This removes any custom authors you added.')) return;
+  setAuthors(JSON.parse(JSON.stringify(DEFAULT_AUTHORS)));
+  setActiveAuthor('dave');
+  renderAuthorsList();
+}
+
+function renderAuthorSelect(selectId){
+  const sel = document.getElementById(selectId);
+  if(!sel) return;
+  const list = getAuthors();
+  const active = getActiveAuthorId();
+  const brandId = (typeof getBrand==='function') ? getBrand().id : null;
+  // Filter: show all "any" + those tagged to current brand. If none match, show all.
+  let scoped = list.filter(a=>!a.brandId || a.brandId==='any' || a.brandId===brandId);
+  if(!scoped.length) scoped = list;
+  sel.innerHTML = scoped.map(a=>{
+    const lbl = (a.name||'(unnamed)') + (a.role?' — '+a.role:'');
+    return `<option value="${a.id}" ${a.id===active?'selected':''}>${escapeHtml(lbl)}</option>`;
+  }).join('');
+  if(!scoped.find(a=>a.id===active) && scoped.length){
+    sel.value = scoped[0].id;
+    setActiveAuthor(scoped[0].id);
+  }
+  // Preview text
+  const a = getActiveAuthor();
+  const previewId = selectId.replace('Select','Preview');
+  const prev = document.getElementById(previewId);
+  if(prev && a){
+    const bits = [];
+    if(a.phone) bits.push('📞 '+a.phone);
+    if(a.email) bits.push('✉ '+a.email);
+    prev.textContent = bits.length ? bits.join(' · ') : '(no contact details set — edit on Manage tab)';
+  }
+}
+
+// Update setBrandFromInline so it also re-scopes the author dropdown to the new brand
+const _setBrandFromInline_orig = (typeof setBrandFromInline==='function') ? setBrandFromInline : null;
+setBrandFromInline = function(id){
+  if(_setBrandFromInline_orig) _setBrandFromInline_orig(id);
+  else { setBrand(id); ['reportsBrandPills','pdfBrandPills'].forEach(renderInlineBrandPicker); }
+  ['reportsAuthorSelect','pdfAuthorSelect'].forEach(renderAuthorSelect);
+};
+
+// ─── Sign-off block builder ───────────────────────────────────
+//  Returns inline HTML to append to a PDF before the footer.
+function buildSignOffBlock(b){
+  const a = getActiveAuthor();
+  if(!a) return '';
+  const bName = (b && b.name) || '';
+  const bWeb  = (b && b.website) || '';
+  const phone = a.phone ? a.phone : '';
+  const email = a.email ? a.email : '';
+  const role  = a.role  ? a.role  : '';
+  return `
+<!-- ══ SIGN-OFF ══ -->
+<div style="margin-top:18px;border:1.5px solid ${b.ink};border-radius:6px;overflow:hidden;page-break-inside:avoid">
+  <div style="background:${b.ink};color:#fff;padding:6px 12px;font-size:7pt;font-weight:700;letter-spacing:.12em;text-transform:uppercase">Report Prepared By</div>
+  <div style="padding:12px 14px;display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center;background:#FAFAF8">
+    <img src="${b.logoData}" alt="${b.name}" style="max-height:48px;max-width:140px;object-fit:contain"/>
+    <div style="font-size:8.5pt;line-height:1.55;color:#222">
+      <div style="font-size:11pt;font-weight:700;color:${b.ink};font-family:Georgia,serif">${a.name||'—'}</div>
+      ${role?`<div style="font-size:8pt;color:#555;margin-top:1px">${role}${bName?' · '+bName:''}</div>`:(bName?`<div style="font-size:8pt;color:#555;margin-top:1px">${bName}</div>`:'')}
+      <div style="margin-top:4px;font-size:8pt;color:#444">
+        ${phone?`<span style="margin-right:14px"><strong>Phone:</strong> ${phone}</span>`:''}
+        ${email?`<span><strong>Email:</strong> ${email}</span>`:''}
+        ${(!phone&&!email)?'<em style="color:#888">Contact details not configured — set on the Manage tab.</em>':''}
+      </div>
+      ${bWeb?`<div style="margin-top:3px;font-size:7.5pt;color:${b.primaryDark}">${bWeb}</div>`:''}
+    </div>
+  </div>
+  <div style="background:#FFFBF0;border-top:1px solid ${b.accent};padding:8px 14px;font-size:8pt;color:#5d4a1c;line-height:1.5">
+    For any questions about this assessment, or to discuss the proposed restoration approach, please contact ${a.name?`<strong>${a.name}</strong>`:'the report author'} directly using the details above.
+  </div>
+</div>
+`;
+}
 // ─── Init ─────────────────────────────────────────────────────
 populateCatFilter();renderItems();
 // Populate dropdowns before setting defaults
