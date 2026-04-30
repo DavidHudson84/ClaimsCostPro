@@ -922,6 +922,20 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--cream);color:var(--
   .header-nav::-webkit-scrollbar{display:none}
 }
 
+
+/* ── Estimate overheads ── */
+.est-oh-card{background:#fff;border:1.5px solid var(--line);border-radius:10px;padding:14px 16px;margin:12px 0}
+.est-oh-card .est-oh-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;cursor:pointer;user-select:none}
+.est-oh-card .est-oh-head h3{font-family:'Playfair Display',serif;font-size:.95rem;color:var(--ink)}
+.est-oh-card .est-oh-head .est-oh-tot{font-family:'IBM Plex Mono',monospace;font-size:.95rem;color:var(--mid);font-weight:700}
+.est-oh-card .est-oh-head .est-oh-toggle{font-size:.85rem;color:var(--muted);transition:transform .2s}
+.est-oh-card.collapsed .est-oh-head .est-oh-toggle{transform:rotate(-90deg)}
+.est-oh-card.collapsed .est-oh-body{display:none}
+.est-oh-card .est-oh-body{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}
+.est-oh-card .est-oh-field label{display:block;font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.est-oh-card .est-oh-field input,.est-oh-card .est-oh-field select{width:100%;padding:7px 10px;border:1.5px solid var(--line);border-radius:6px;font-size:.82rem;font-family:'IBM Plex Sans',sans-serif;background:var(--paper);color:var(--ink)}
+.est-oh-card .est-oh-field input:focus,.est-oh-card .est-oh-field select:focus{outline:none;border-color:var(--amber)}
+.est-oh-card .est-oh-row2{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 </style>
 </head>
 <body>
@@ -1289,6 +1303,65 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--cream);color:var(--
   <button onclick="openAddCustomModal('est')">+ Add Custom Item</button>
 </div>
 <div id="estItemBlocks"></div>
+
+      <!-- ── JOB OVERHEADS ── -->
+      <div class="est-oh-card" id="estOhCard">
+        <div class="est-oh-head" onclick="toggleEstOh()">
+          <h3>💼 Job Overheads (on-costs)</h3>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span class="est-oh-tot" id="estOhTotalDisp">$0</span>
+            <span class="est-oh-toggle">▼</span>
+          </div>
+        </div>
+        <div class="est-oh-body">
+          <div class="est-oh-field">
+            <label>Vehicle</label>
+            <select id="estVehicleType" onchange="updateEstTotals()">
+              <option value="0">None / own vehicle</option>
+              <option value="65">Small Van ($65/hr)</option>
+              <option value="95">Truck 1–4t ($95/hr)</option>
+              <option value="130">Truck 4t+ ($130/hr)</option>
+            </select>
+          </div>
+          <div class="est-oh-field">
+            <div class="est-oh-row2">
+              <div><label>Trans hrs</label><input type="number" id="estTransHrs" value="0" min="0" step="0.5" oninput="updateEstTotals()"/></div>
+              <div><label>Fuel ($)</label><input type="number" id="estFuel" value="0" min="0" oninput="updateEstTotals()"/></div>
+            </div>
+          </div>
+          <div class="est-oh-field">
+            <div class="est-oh-row2">
+              <div><label>Tolls ($)</label><input type="number" id="estTolls" value="0" min="0" oninput="updateEstTotals()"/></div>
+              <div>
+                <label>Site rate</label>
+                <select id="estSiteRate" onchange="updateEstTotals()">
+                  <option value="75">$75/hr Std</option>
+                  <option value="110">$110/hr Spec</option>
+                  <option value="130">$130/hr WE</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="est-oh-field">
+            <div class="est-oh-row2">
+              <div><label>Site hrs</label><input type="number" id="estSiteHrs" value="0" min="0" step="0.5" oninput="updateEstTotals()"/></div>
+              <div><label>Packaging ($)</label><input type="number" id="estPkgTotal" value="0" min="0" oninput="updateEstTotals()"/></div>
+            </div>
+          </div>
+          <div class="est-oh-field">
+            <div class="est-oh-row2">
+              <div><label>Admin ($)</label><input type="number" id="estAdmin" value="0" min="0" oninput="updateEstTotals()"/></div>
+              <div><label>Storage ($)</label><input type="number" id="estStorage" value="0" min="0" oninput="updateEstTotals()"/></div>
+            </div>
+          </div>
+          <div class="est-oh-field">
+            <div class="est-oh-row2">
+              <div><label>Insurance ($)</label><input type="number" id="estInsurance" value="0" min="0" oninput="updateEstTotals()"/></div>
+              <div><label>Other ($)</label><input type="number" id="estOtherOH" value="0" min="0" oninput="updateEstTotals()"/></div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <!-- ── NOTES ── -->
       <div class="est-notes-wrap">
@@ -3290,7 +3363,7 @@ function getJobData(){
     job:{jobName:gv('jobName'),custName:gv('custName'),custAddr:gv('custAddr'),claimNum:gv('claimNum'),jobNum:gv('jobNum'),insurer:gv('insurer'),dateOfLoss:gv('dateOfLoss'),jobDate:gv('jobDate'),assessorName:gv('assessorName')},
     settings:{tier:currentTier,dmgCode:currentDmgCode,dmgMult:currentDmgMult},
     estSettings:{tier:estTier,dmgCode:estDmgCode,dmgMult:estDmgMult},
-    overheads:{vehicleType:gv('vehicleType'),transHrs:gv('transHrs'),fuel:gv('fuel'),tolls:gv('tolls'),siteRate:gv('siteRate'),siteHrs:gv('siteHrs'),pkgTotal:gv('pkgTotal'),admin:gv('admin'),storage:gv('storage'),insurance:gv('insurance'),otherOH:gv('otherOH')},
+    overheads:{vehicleType:gv('vehicleType'),transHrs:gv('transHrs'),fuel:gv('fuel'),tolls:gv('tolls'),siteRate:gv('siteRate'),siteHrs:gv('siteHrs'),pkgTotal:gv('pkgTotal'),admin:gv('admin'),storage:gv('storage'),insurance:gv('insurance'),otherOH:gv('otherOH')},estOverheads:{estVehicleType:gv('estVehicleType'),estTransHrs:gv('estTransHrs'),estFuel:gv('estFuel'),estTolls:gv('estTolls'),estSiteRate:gv('estSiteRate'),estSiteHrs:gv('estSiteHrs'),estPkgTotal:gv('estPkgTotal'),estAdmin:gv('estAdmin'),estStorage:gv('estStorage'),estInsurance:gv('estInsurance'),estOtherOH:gv('estOtherOH')},
     quantities,estQtys,customItems:items,ohRates,multipliers};
 }
 
@@ -3316,6 +3389,7 @@ function loadJobFile(event){
         const jd=document.getElementById('jd_'+k);if(jd)jd.value=v||'';
       });
       if(data.overheads)Object.entries(data.overheads).forEach(([k,v])=>{const el=document.getElementById(k);if(el)el.value=v||''});
+      if(data.estOverheads)Object.entries(data.estOverheads).forEach(([k,v])=>{const el=document.getElementById(k);if(el)el.value=v||''});
       if(data.settings){
         currentTier=data.settings.tier||1;currentDmgMult=data.settings.dmgMult||1;currentDmgCode=data.settings.dmgCode||'STD';
         document.querySelectorAll('.tier-pill').forEach(p=>{p.classList.remove('active');if(parseInt(p.dataset.tier)===currentTier)p.classList.add('active')});
@@ -3845,19 +3919,51 @@ function updateEstRowDisplay(idx){
 }
 
 // ── Totals bar ────────────────────────────────────────────────
+function getEstOverhead(){
+  const gv = id => parseFloat(document.getElementById(id)?.value)||0;
+  const vr = gv('estVehicleType');
+  const th = gv('estTransHrs');
+  const fu = gv('estFuel');
+  const to = gv('estTolls');
+  const sr = gv('estSiteRate');
+  const sh = gv('estSiteHrs');
+  const pk = gv('estPkgTotal');
+  const ad = gv('estAdmin');
+  const st = gv('estStorage');
+  const ins= gv('estInsurance');
+  const ot = gv('estOtherOH');
+  const transport = vr*th + fu + to;
+  const site = sr*sh;
+  const total = transport + site + pk + ad + st + ins + ot;
+  return {transport, site, pkg:pk, admin:ad, storage:st, insurance:ins, other:ot, total,
+    lines:[
+      {l:'Transport (vehicle + fuel + tolls)', v:transport},
+      {l:'On-site labour',                     v:site},
+      {l:'Packaging',                          v:pk},
+      {l:'Admin / job management',             v:ad},
+      {l:'Storage',                            v:st},
+      {l:'Insurance',                          v:ins},
+      {l:'Other',                              v:ot},
+    ]};
+}
+function toggleEstOh(){ document.getElementById('estOhCard').classList.toggle('collapsed'); }
+
 function calcEstTotals(){
-  let qty=0, restore=0, repl=0;
+  let qty=0, restoreItems=0, repl=0;
   estPricing.forEach(item=>{
     const q = estQtys[item.name]||0; if(!q) return;
-    qty     += q;
-    restore += q * getEstRestore(item) * estDmgMult;
-    repl    += q * getEstRepl(item, estTier);
+    qty          += q;
+    restoreItems += q * getEstRestore(item) * estDmgMult;
+    repl         += q * getEstRepl(item, estTier);
   });
-  restore = Math.round(restore);
-  repl    = Math.round(repl);
+  restoreItems = Math.round(restoreItems);
+  repl         = Math.round(repl);
+  const oh     = getEstOverhead();
+  const ohTotal= Math.round(oh.total||0);
+  const restore= restoreItems + ohTotal;     // total restoration claim incl on-costs
   const saving = repl - restore;
   const pct    = repl>0 ? (restore/repl*100) : 0;
-  return { qty, restore, repl, saving, pct };
+  return { qty, restore, restoreItems, ohTotal, oh, repl, saving, pct };
 }
 
 function updateEstTotals(){
@@ -3872,6 +3978,7 @@ function updateEstTotals(){
   set('etRepl',    fmtAU(t.repl));
   set('etSaving',  fmtAU(t.saving));
   set('etPctLabel', pct>0 ? `${pct.toFixed(1)}% of replacement` : '— enter quantities');
+  set('estOhTotalDisp', fmtAU(t.ohTotal||0));
 
   const bar = document.getElementById('etPctBar');
   if(bar){ bar.style.width=barW+'%'; bar.style.background=barCol; }
@@ -3904,6 +4011,11 @@ function updateEstBadge(){
 
 function clearEstimate(){
   estQtys = {};
+  // Reset overheads to defaults too
+  ['estVehicleType','estTransHrs','estFuel','estTolls','estSiteRate','estSiteHrs','estPkgTotal','estAdmin','estStorage','estInsurance','estOtherOH'].forEach(id=>{
+    const el = document.getElementById(id); if(!el) return;
+    el.value = (id==='estVehicleType'||id==='estSiteRate') ? el.options[0].value : '0';
+  });
   renderEstBlocks();
   updateEstTotals();
   updateEstBadge();
@@ -3996,10 +4108,11 @@ function generateEstReport(){
     </p>
     <div class="claim-bar pdf-section-totals">
       <div class="claim-cell"><div class="claim-cell-label">Total Items</div><div class="claim-cell-value">${tots.qty}</div><div class="claim-cell-sub">Across all categories</div></div>
-      <div class="claim-cell"><div class="claim-cell-label">Restoration Cost</div><div class="claim-cell-value">${fmtAU(tots.restore)}</div><div class="claim-cell-sub">After ×${estDmgMult.toFixed(2)} multiplier</div></div>
+      <div class="claim-cell"><div class="claim-cell-label">Items Restoration</div><div class="claim-cell-value">${fmtAU(tots.restoreItems)}</div><div class="claim-cell-sub">After ×${estDmgMult.toFixed(2)} multiplier</div></div>
+      ${tots.ohTotal>0?`<div class="claim-cell"><div class="claim-cell-label">Job Overheads</div><div class="claim-cell-value">${fmtAU(tots.ohTotal)}</div><div class="claim-cell-sub">Transport, site, packaging…</div></div>`:''}
+      <div class="claim-cell highlight"><div class="claim-cell-label">Total Restoration</div><div class="claim-cell-value">${fmtAU(tots.restore)}</div><div class="claim-cell-sub">Items + overheads</div></div>
       <div class="claim-cell"><div class="claim-cell-label">Replacement Value</div><div class="claim-cell-value">${fmtAU(tots.repl)}</div><div class="claim-cell-sub">T${estTier} ${EST_TIER_NAMES[estTier-1]} tier</div></div>
-      <div class="claim-cell highlight"><div class="claim-cell-label">Client Saving</div><div class="claim-cell-value">${fmtAU(tots.saving)}</div><div class="claim-cell-sub">vs full replacement</div></div>
-      <div class="claim-cell highlight"><div class="claim-cell-label">Restore %</div><div class="claim-cell-value">${pct.toFixed(1)}%</div><div class="claim-cell-sub">of replacement value</div></div>
+      <div class="claim-cell highlight"><div class="claim-cell-label">Client Saving</div><div class="claim-cell-value">${fmtAU(tots.saving)}</div><div class="claim-cell-sub">${pct.toFixed(1)}% restore vs replacement</div></div>
     </div>
     <div class="pdf-section-ratio" style="margin-bottom:16px">
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px">
@@ -4026,6 +4139,19 @@ function generateEstReport(){
         <tbody>${tRows}</tbody>
       </table>
     </div>
+    ${tots.ohTotal>0?`<div class="oh-breakdown-row pdf-section-overheads" style="margin-bottom:${notes?'16px':'0'};margin-top:14px">
+      <div class="oh-breakdown-card">
+        <h4>Overhead Breakdown</h4>
+        ${tots.oh.lines.filter(l=>l.v>0).map(l=>`<div class="oh-line"><span class="ohl">${l.l}</span><span class="ohv">${fmtAU(l.v)}</span></div>`).join('')||'<div class="oh-line"><span class="ohl" style="font-style:italic">No overheads</span></div>'}
+        <div class="oh-line" style="margin-top:4px;padding-top:4px;border-top:2px solid var(--line)"><span><strong>Total Overheads</strong></span><span class="ohv"><strong>${fmtAU(tots.ohTotal)}</strong></span></div>
+      </div>
+      <div class="oh-breakdown-card">
+        <h4>Restoration Cost Build-up</h4>
+        <div class="oh-line"><span class="ohl">Items restoration (after ×${estDmgMult.toFixed(2)})</span><span class="ohv">${fmtAU(tots.restoreItems)}</span></div>
+        <div class="oh-line"><span class="ohl">Job overheads</span><span class="ohv">+ ${fmtAU(tots.ohTotal)}</span></div>
+        <div class="oh-line" style="margin-top:4px;padding-top:4px;border-top:2px solid var(--line)"><span><strong>Total Restoration Claim</strong></span><span class="ohv" style="color:#1565C0"><strong>${fmtAU(tots.restore)}</strong></span></div>
+      </div>
+    </div>`:''}
     ${notes?`<div class="pdf-section-notes" style="background:white;border:1px solid var(--line);border-radius:9px;padding:14px 16px"><div style="font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Notes</div><div style="font-size:.8rem;white-space:pre-wrap">${notes}</div></div>`:''}`;
 
   const z = document.getElementById('estResultZone');
@@ -4685,6 +4811,7 @@ function loadJobFromHistory(id){
       const jd=document.getElementById('jd_'+k);if(jd)jd.value=v||'';
     });
     if(data.overheads) Object.entries(data.overheads).forEach(([k,v])=>{const el=document.getElementById(k);if(el)el.value=v||''});
+    if(data.estOverheads) Object.entries(data.estOverheads).forEach(([k,v])=>{const el=document.getElementById(k);if(el)el.value=v||''});
     if(data.settings){
       currentTier=data.settings.tier||1; currentDmgMult=data.settings.dmgMult||1; currentDmgCode=data.settings.dmgCode||'STD';
       document.querySelectorAll('.tier-pill').forEach(p=>{p.classList.remove('active');if(parseInt(p.dataset.tier)===currentTier)p.classList.add('active')});
