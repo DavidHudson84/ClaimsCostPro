@@ -1615,7 +1615,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--cream);color:var(--
       <div class="add-custom-bar">
   <div class="acb-text">Need an item not in the list? Add a custom one — it'll persist across all jobs.</div>
   <div style="display:flex;gap:8px;flex-wrap:wrap">
-    <button onclick="document.getElementById('importFileInput').click()" style="background:#fff;border:1.5px solid var(--line);color:var(--ink)">📥 Import items</button>
+    <button onclick="importDest='calc'; selectImportDest('calc'); showImportModal();" style="background:#fff;border:1.5px solid var(--line);color:var(--ink)">📥 Import items</button>
     <button onclick="openAddCustomModal('calc')">+ Add Custom Item</button>
   </div>
 </div>
@@ -1807,7 +1807,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--cream);color:var(--
       <div class="add-custom-bar" style="margin:0 0 12px">
   <div class="acb-text">Need a one-off item? Add a custom one and use it in this and future estimates.</div>
   <div style="display:flex;gap:8px;flex-wrap:wrap">
-    <button onclick="document.getElementById('importFileInput').click()" style="background:#fff;border:1.5px solid var(--line);color:var(--ink)">📥 Import items</button>
+    <button onclick="importDest='est'; selectImportDest('est'); showImportModal();" style="background:#fff;border:1.5px solid var(--line);color:var(--ink)">📥 Import items</button>
     <button onclick="document.getElementById('csImportFileInput').click()" style="background:#1A4FBE;color:white;border:1.5px solid #0D3380">📥 Import CS Quote</button>
     <button onclick="openAddCustomModal('est')">+ Add Custom Item</button>
   </div>
@@ -5026,6 +5026,7 @@ function saveEstPricing(){
 
 let importRows     = [];   // parsed rows from file
 let importDest     = 'calc'; // 'calc' or 'est'
+let _importMeta    = {};   // Phase 5.8 — header metadata captured during parse (account, dateFrom, dateTo, fileName)
 let importFileName = '';
 
 // ── Modal open/close ──────────────────────────────────────────
@@ -5120,6 +5121,19 @@ function parseExcelRows(rows){
 //    and simple flat table formats ───────────────────────────────
 function parseUniversal(rows){
   importRows = [];
+  _importMeta = { account: '', dateFrom: '', dateTo: '', fileName: importFileName || '' };
+  // Phase 5.8 — extract Account + period from Sales by Product header (first ~5 rows)
+  for(let r = 0; r < Math.min(rows.length, 6); r++){
+    const cells = (rows[r] || []).map(c => String(c == null ? '' : c).trim());
+    cells.forEach(function(cell){
+      // 'Account: PRESTON, ,'  → PRESTON
+      const am = cell.match(/^Account:\s*([^,]+?)(?:\s*,.*)?$/i);
+      if(am && !_importMeta.account){ _importMeta.account = am[1].trim(); }
+      // 'This period: 1 July 2025 to 30 June 2026'  → from + to
+      const pm = cell.match(/period:\s*(.+?)\s+to\s+(.+)/i);
+      if(pm){ _importMeta.dateFrom = pm[1].trim(); _importMeta.dateTo = pm[2].trim(); }
+    });
+  }
 
   // ─ Detect hierarchical format (Sales by Product style)
   // In this format, item rows have 2+ leading empty cells, then item name, qty, sales, price
@@ -5290,6 +5304,29 @@ function confirmImport(){
   let imported=0, created=0, skipped=0;
   const newlyCreated = [];
 
+  // Phase 5.8 — auto-create job if none currently loaded (Option C: load existing OR create new)
+  let _autoCreatedJob = false;
+  if(typeof _currentJobV6 === 'undefined' || !_currentJobV6){
+    if(typeof newJobInUI === 'function' && _importMeta && (_importMeta.account || _importMeta.fileName)){
+      // Best-guess dateLogged from metadata (try to parse 'June 2026' style; fall back to today)
+      let dateLogged = new Date().toISOString().slice(0,10);
+      const tryDate = _importMeta.dateFrom || _importMeta.dateTo;
+      if(tryDate){
+        const d = new Date(tryDate);
+        if(!isNaN(d.getTime())) dateLogged = d.toISOString().slice(0,10);
+      }
+      const jobName = _importMeta.account || (_importMeta.fileName || 'Imported job').replace(/\.[^.]+$/, '');
+      newJobInUI({
+        jobName:        jobName,
+        jobRef:         jobName.toUpperCase().replace(/[^A-Z0-9]/g, '-').slice(0, 20) + '-' + Date.now().toString().slice(-4),
+        custName:       _importMeta.account || '',
+        insurer:        '',  // direct MDC job — no insurer
+        jobDate:        dateLogged,
+      });
+      _autoCreatedJob = true;
+    }
+  }
+
   importRows.forEach((row,idx)=>{
     const chk = document.getElementById('ichk-'+idx);
     if(!chk || !chk.checked){ skipped++; return; }
@@ -5349,14 +5386,36 @@ function confirmImport(){
     updateEstBadge();
   }
 
+  // Phase 5.8 — sync the global quantities/estQtys into _currentJobV6 so they persist on the job
+  if(typeof _currentJobV6 !== 'undefined' && _currentJobV6){
+    if(importDest === 'calc'){
+      if(!_currentJobV6.calc) _currentJobV6.calc = blankCalcState();
+      if(!_currentJobV6.calc.quantities) _currentJobV6.calc.quantities = {};
+      Object.keys(quantities).forEach(function(k){
+        if((Number(quantities[k]) || 0) > 0) _currentJobV6.calc.quantities[k] = Number(quantities[k]);
+      });
+    } else {
+      if(!_currentJobV6.est) _currentJobV6.est = blankEstState();
+      if(!_currentJobV6.est.quantities) _currentJobV6.est.quantities = {};
+      Object.keys(estQtys).forEach(function(k){
+        if((Number(estQtys[k]) || 0) > 0) _currentJobV6.est.quantities[k] = Number(estQtys[k]);
+      });
+    }
+    _currentJobV6.updatedAt = new Date().toISOString();
+    if(typeof saveJobToV6Store === 'function') saveJobToV6Store(_currentJobV6);
+    if(typeof logJobActivity === 'function') logJobActivity(_currentJobV6, 'Imported ' + imported + ' items into ' + (importDest==='calc'?'Calculator':'Estimate') + (_autoCreatedJob ? ' (job auto-created from import)' : ''));
+  }
+
   // Show done screen
   const dest = importDest==='calc'?'Calculator':'Estimate';
+  const jobNote = _autoCreatedJob ? '<br/><strong style="color:#22c55e">✓ New job auto-created from this file</strong>' : '';
   document.getElementById('importDoneTitle').textContent = `Import Complete — ${imported} item${imported!==1?'s':''} added to ${dest}`;
   document.getElementById('importDoneMsg').innerHTML =
     `<strong>${imported}</strong> item${imported!==1?'s':''} imported · ` +
     `<strong>${created}</strong> new item${created!==1?'s':''} created · ` +
     `<strong>${skipped}</strong> skipped<br/>` +
     (newlyCreated.length ? `<span style="color:#1565C0">New items created: ${newlyCreated.join(', ')}</span><br/>` : '') +
+    jobNote +
     `<br/>Switch to the ${dest} tab to review quantities.`;
   goToImportStep(4);
 }
