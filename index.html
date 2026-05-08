@@ -842,6 +842,9 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--cream);color:var(--
 .add-custom-cat-btn{display:block;width:100%;margin-top:10px;padding:8px 14px;background:transparent;color:var(--ink);border:1.5px dashed #BBBBBB;border-radius:6px;font-size:.78rem;font-weight:500;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;transition:all .15s}
 .add-custom-cat-btn:hover{background:#FFFBF0;border-color:var(--amber);color:var(--ink)}
 
+/* T-02 (8 May 2026) — GST exclusive marker — applied next to restoration/claim/margin totals */
+.gst-tag{display:inline-block;font-size:.55em;font-weight:600;color:#666;letter-spacing:.04em;margin-left:5px;vertical-align:baseline;text-transform:uppercase}
+
 /* Add Custom modal */
 .acm-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;padding:20px;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .acm-overlay.open{display:flex}
@@ -2009,6 +2012,14 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--cream);color:var(--
         <button class="rp-btn rp-btn-primary" onclick="printEstReport()">📄 Open PDF Options</button>
         <button class="rp-btn rp-btn-ghost" onclick="showPage('est',document.querySelectorAll('.nav-btn')[2])">Open Estimate →</button>
       </div>
+      <!-- F-04 (8 May 2026) — additional report launchers from Estimate panel -->
+      <div style="margin-top:14px;padding-top:12px;border-top:1px solid #ddd">
+        <div style="font-size:.75rem;color:#666;margin-bottom:8px;font-weight:600">More report types from Estimate data:</div>
+        <div class="rp-actions">
+          <button class="rp-btn rp-btn-ghost" onclick="maOpenReport()">📊 Margin Analysis</button>
+          <button class="rp-btn rp-btn-ghost" onclick="openReportPanel('env')">🌱 Environmental Impact</button>
+        </div>
+      </div>
     </div>
 
     <!-- Non-Restorable panel -->
@@ -2035,6 +2046,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--cream);color:var(--
           <div class="rpd-text">Click to add photos or drag-and-drop</div>
           <div class="rpd-sub">JPG/PNG/HEIC — auto-resized to fit storage. Multiple selection supported.</div>
         </label>
+        <div id="nrPhotoStats" style="font-size:.78rem;color:var(--muted);margin:4px 2px 8px"></div>
         <div class="rp-photo-grid" id="nrPhotoGrid"></div>
       </div>
 
@@ -2085,6 +2097,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--cream);color:var(--
           <div class="rpd-text">Click to add photos or drag-and-drop</div>
           <div class="rpd-sub">JPG/PNG/HEIC — auto-resized. Captions optional.</div>
         </label>
+        <div id="ispPhotoStats" style="font-size:.78rem;color:var(--muted);margin:4px 2px 8px"></div>
         <div class="rp-photo-grid" id="ispPhotoGrid"></div>
       </div>
 
@@ -2658,6 +2671,15 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--cream);color:var(--
       </label>
 
       <label class="pdf-preset">
+        <input type="radio" name="pdfPreset" value="quote_only" onchange="updatePdfPresetUI()"/>
+        <div class="pdf-preset-card">
+          <div class="pdf-preset-icon">💰</div>
+          <div class="pdf-preset-name">Quote Only</div>
+          <div class="pdf-preset-desc">Restoration cost only — no replacement values shown anywhere. For insurer quotes where comparison is not needed.</div>
+        </div>
+      </label>
+
+      <label class="pdf-preset">
         <input type="radio" name="pdfPreset" value="custom" onchange="updatePdfPresetUI()"/>
         <div class="pdf-preset-card">
           <div class="pdf-preset-icon">⚙️</div>
@@ -2683,7 +2705,15 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--cream);color:var(--
       <span class="author-preview" id="pdfAuthorPreview"></span>
     </div>
 
-    <label class="pdf-section-check" style="margin-top:14px;display:flex;align-items:flex-start;gap:8px;background:#F1F8F4;border-left:3px solid #2E7D32;padding:10px 12px;border-radius:5px;cursor:pointer">
+    <label class="pdf-section-check" style="margin-top:14px;display:flex;align-items:flex-start;gap:8px;background:#FFFBF0;border-left:3px solid #E8A020;padding:10px 12px;border-radius:5px;cursor:pointer">
+      <input type="checkbox" id="pdfCompareCheck" style="margin-top:3px"/>
+      <span style="font-size:.78rem;color:#5C3A00;line-height:1.45">
+        <strong>Include replacement vs restoration comparison</strong><br/>
+        <span style="color:#444;font-size:.72rem">Adds the Replacement Cost Summary (Section 7) plus the Target Zone Verdict / ratio bar (Section 8) to the Calculator report. On the Estimate report, adds the ratio bar + verdict strip. Default OFF — most insurer reports just want the restoration quote.</span>
+      </span>
+    </label>
+
+    <label class="pdf-section-check" style="margin-top:10px;display:flex;align-items:flex-start;gap:8px;background:#F1F8F4;border-left:3px solid #2E7D32;padding:10px 12px;border-radius:5px;cursor:pointer">
       <input type="checkbox" id="pdfEnvCheck" style="margin-top:3px"/>
       <span style="font-size:.78rem;color:#1B5E20;line-height:1.45">
         <strong>Include Environmental Impact section</strong><br/>
@@ -3091,7 +3121,7 @@ function calculate(){
         <div class="oh-line"><span class="ohl">Damage add ×${currentDmgMult.toFixed(2)}</span><span class="ohv">+${fmt(totalRestDmg-totalRestBase)}</span></div>
         <div class="oh-line"><span class="ohl">Items after multiplier</span><span class="ohv">${fmt(totalRestDmg)}</span></div>
         <div class="oh-line"><span class="ohl">Job overheads</span><span class="ohv">${fmt(oh.total)}</span></div>
-        <div class="oh-line" style="margin-top:4px;padding-top:4px;border-top:2px solid var(--line)"><span>Total Restoration</span><span class="ohv" style="color:#1565C0">${fmt(totalFull)}</span></div>
+        <div class="oh-line" style="margin-top:4px;padding-top:4px;border-top:2px solid var(--line)"><span>Total Restoration</span><span class="ohv" style="color:#1565C0">${fmt(totalFull)}<span class="gst-tag">+ GST</span></span></div>
         <div class="oh-line"><span class="ohl">Replacement value</span><span class="ohv">${fmt(totalRepl)}</span></div>
         <div class="oh-line" style="color:var(--good)"><span>Total Saving</span><span class="ohv">${fmt(saving)} (${savPct.toFixed(1)}%)</span></div>
       </div>
@@ -3186,20 +3216,23 @@ function _exportReportPDF_run(opts){
     itemRowsHtml+=`<tr>
       <td class="item-name-cell">${row.name}</td>
       <td class="num">${row.qty}</td>
-      <td class="num">${fmt(row.rp)}</td>
-      <td class="num">${fmt(row.lr)}</td>
+      <td class="num repl-col">${fmt(row.rp)}</td>
+      <td class="num repl-col">${fmt(row.lr)}</td>
       <td class="num rest">${fmt(row.ru)}</td>
       <td class="num rest">${fmt(row.lru)}</td>
-      <td class="num" style="color:${pctCol};background:${pctBg};font-weight:700">${row.pct.toFixed(0)}%</td>
+      <td class="num cmp-col" style="color:${pctCol};background:${pctBg};font-weight:700">${row.pct.toFixed(0)}%</td>
     </tr>`;
   });
   // Subtotal row
+  // F-01 — When rest-only mode, subtotal row needs different colspan since repl-col cells are hidden
   itemRowsHtml+=`<tr class="subtotal-row">
-    <td colspan="3" style="text-align:left;padding-left:10px">Item Subtotals</td>
-    <td class="num">${fmt(r.totalRepl)}</td>
-    <td class="num rest" colspan="1">×${r.dmgMult.toFixed(2)}</td>
+    <td class="rest-only-subtotal-label">Item Subtotals</td>
+    <td></td>
+    <td class="num repl-col">${fmt(r.totalRepl)}</td>
+    <td class="num repl-col"></td>
+    <td class="num rest">×${r.dmgMult.toFixed(2)}</td>
     <td class="num rest">${fmt(r.totalRestDmg)}</td>
-    <td class="num" style="font-weight:700">${r.itemPct.toFixed(1)}%</td>
+    <td class="num cmp-col" style="font-weight:700">${r.itemPct.toFixed(1)}%</td>
   </tr>`;
 
   // Overhead lines
@@ -3342,16 +3375,22 @@ function _exportReportPDF_run(opts){
   @media print{
     body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   }
+  /* T-02 — GST exclusive marker */
+  .gst-tag{display:inline;font-size:.6em;font-weight:600;color:#666;letter-spacing:.04em;margin-left:4px;vertical-align:baseline;text-transform:uppercase}
+  /* F-01 (8 May 2026) — Restoration-only quote mode: hide replacement + comparison columns */
+  body.rest-only .repl-col,
+  body.rest-only .cmp-col{display:none}
+  body.rest-only .rest-only-subtotal-label{font-weight:700}
 </style>
 </head>
-<body>
+<body class="${(opts && opts.mode==='quote_only') ? 'rest-only' : ''}">
 
 <!-- ══ PAGE HEADER ══ -->
 <div class="page-header">
   <div class="ph-left">
     <div class="ph-logo"><img src="${b.logoData}" alt="${b.name}"/></div>
     <div>
-      <div class="ph-title">Textile Restoration Report</div>
+      <div class="ph-title">${(opts && opts.mode==='quote_only') ? 'Restoration Quote' : 'Textile Restoration Report'}</div>
       <div class="ph-sub">${b.name} · ${b.tagline}</div>${pdfStageBadgeHtml(b)}
     </div>
   </div>
@@ -3388,6 +3427,7 @@ function _exportReportPDF_run(opts){
     <div class="sb-label" style="color:${tc}">Replacement Tier</div>
     <div class="sb-value" style="color:${tc}">T${r.tier} — ${r.tierNames[r.tier-1]}</div>
     <div class="sb-desc" style="color:${tc}">Replacement prices based on Australian market comparable brands at this quality tier</div>
+    ${tierFinderPdfNote()}
   </div>
   <div class="setting-box" style="border-color:#555;background:#F5F5F5">
     <div class="sb-label" style="color:#555">Items Assessed</div>
@@ -3414,11 +3454,11 @@ function _exportReportPDF_run(opts){
     <tr>
       <th style="width:28%">Item</th>
       <th class="num" style="width:5%">Qty</th>
-      <th class="num" style="width:12%">Repl/Unit</th>
-      <th class="num" style="width:12%">Repl Total</th>
+      <th class="num repl-col" style="width:12%">Repl/Unit</th>
+      <th class="num repl-col" style="width:12%">Repl Total</th>
       <th class="num" style="width:12%">Rest/Unit</th>
       <th class="num" style="width:12%">Rest Total</th>
-      <th class="num" style="width:10%">Rest % Repl</th>
+      <th class="num cmp-col" style="width:10%">Rest % Repl</th>
     </tr>
   </thead>
   <tbody>
@@ -3450,7 +3490,7 @@ function _exportReportPDF_run(opts){
       <div class="line-row"><span class="line-label">Damage multiplier add (×${r.dmgMult.toFixed(2)} ${r.dmgNames[r.dmgCode]})</span><span class="line-val">+ ${fmt(r.totalRestDmg-r.totalRestBase)}</span></div>
       <div class="line-row"><span class="line-label">Item restoration after damage multiplier</span><span class="line-val">${fmt(r.totalRestDmg)}</span></div>
       <div class="line-row"><span class="line-label">Job overheads</span><span class="line-val">+ ${fmt(r.oh.total)}</span></div>
-      <div class="line-row" style="color:${b.ink}"><span class="line-label">Total Restoration Claim</span><span class="line-val" style="color:${b.primaryDark};font-size:9pt">${fmt(r.totalFull)}</span></div>
+      <div class="line-row" style="color:${b.ink}"><span class="line-label">Total Restoration Claim</span><span class="line-val" style="color:${b.primaryDark};font-size:9pt">${fmt(r.totalFull)}<span class="gst-tag">+ GST</span></span></div>
     </div>
   </div>
   <div class="panel">
@@ -3493,7 +3533,7 @@ function _exportReportPDF_run(opts){
   </div>
   <div class="sum-box" style="background:#E3F2FD">
     <div class="sb-lbl">Total Restoration Claim</div>
-    <div class="sb-amt" style="color:${b.primaryDark}">${fmt(r.totalFull)}</div>
+    <div class="sb-amt" style="color:${b.primaryDark}">${fmt(r.totalFull)}<span class="gst-tag">+ GST</span></div>
     <div class="sb-sub">Items + overheads</div>
   </div>
   <div class="sum-box" style="background:#E8F5E9">
@@ -3586,12 +3626,25 @@ function filterCalcSections(html, opts){
   let keep;
   if(opts.mode==='simple'){
     keep = {s1:true, s2:true, s3:false, s4:false, s5:false, s6:false, s7:false, s8:true, footer:true};
+  } else if(opts.mode==='quote_only'){
+    // F-01 (8 May 2026) — Restoration-only quote: drop replacement-related sections
+    // s3 = Tier Brands, s7 = Replacement Cost Summary, s8 = Target Zone Verdict
+    // Items table stays but replacement columns are hidden via CSS body.rest-only
+    keep = {s1:true, s2:true, s3:false, s4:true, s5:true, s6:true, s7:false, s8:false, footer:true};
   } else if(opts.mode==='custom'){
     keep = opts.sections || {};
     keep.footer = true;
   } else {
-    // detailed — include all
+    // detailed — include all (default)
     keep = {s1:true,s2:true,s3:true,s4:true,s5:true,s6:true,s7:true,s8:true,footer:true};
+  }
+  // F-03 (8 May 2026) — Replacement vs Restoration comparison opt-in
+  // When includeComparison is FALSE (default), drop the Replacement Cost Summary (s7)
+  // and the Target Zone Verdict (s8) from the Detailed preset. Custom preset is
+  // unaffected — user has full control there.
+  if(opts.mode !== 'custom' && opts.includeComparison === false){
+    keep.s7 = false;
+    keep.s8 = false;
   }
 
   // Split html at each marker; each piece contains the section after its marker
@@ -4170,8 +4223,45 @@ tier_scores must sum to 100. recommended_tier is 1-5. confidence is "low", "medi
   }
 }
 
+// F-02 (8 May 2026) — Save Tier Finder result to the loaded job
+function _saveTierFinderToJob(result, count){
+  try{
+    if(typeof _currentJobV6 === 'undefined' || !_currentJobV6) return;
+    const o = (result && result.overall) || {};
+    _currentJobV6.tierFinder = {
+      recommended: Number(o.recommended_tier) || null,
+      tierName:    o.tier_name || '',
+      confidence:  o.confidence || '',
+      reasoning:   o.reasoning || '',
+      itemCount:   Number(count) || 0,
+      analyzedAt:  new Date().toISOString()
+    };
+    _currentJobV6.updatedAt = new Date().toISOString();
+    if(typeof saveJobToV6Store === 'function') saveJobToV6Store(_currentJobV6);
+    if(typeof logJobActivity === 'function'){
+      logJobActivity(_currentJobV6, 'Tier Finder: T' + _currentJobV6.tierFinder.recommended + ' ' + _currentJobV6.tierFinder.tierName + ' (' + _currentJobV6.tierFinder.confidence + ' confidence, ' + _currentJobV6.tierFinder.itemCount + ' garments)');
+    }
+  }catch(e){ console.warn('TierFinder save failed', e); }
+}
+
+// F-02 — Inline note for PDF reports (Calc + Est). Empty string if no data.
+function tierFinderPdfNote(){
+  try{
+    if(typeof _currentJobV6 === 'undefined' || !_currentJobV6 || !_currentJobV6.tierFinder) return '';
+    const tf = _currentJobV6.tierFinder;
+    if(!tf.recommended) return '';
+    return '<div style="font-size:6.5pt;color:#1565C0;margin-top:4px;font-style:italic">' +
+      '🎯 AI Tier Finder: T' + tf.recommended + ' ' + (tf.tierName || '') +
+      ' · ' + (tf.confidence || '—') + ' confidence' +
+      ' · ' + (tf.itemCount || 0) + ' garments analysed' +
+      '</div>';
+  }catch(e){ return ''; }
+}
+
 function renderTierResult(result, count){
   const o = result.overall;
+  // F-02 — persist result to the loaded job before rendering
+  _saveTierFinderToJob(result, count);
   const t = o.recommended_tier;
   const col = TIER_COLORS[t-1];
   const bg  = TIER_BG[t-1];
@@ -4719,7 +4809,7 @@ function generateEstReport(){
       <div class="claim-cell"><div class="claim-cell-label">Total Items</div><div class="claim-cell-value">${tots.qty}</div><div class="claim-cell-sub">Across all categories</div></div>
       <div class="claim-cell"><div class="claim-cell-label">Items Restoration</div><div class="claim-cell-value">${fmtAU(tots.restoreItems)}</div><div class="claim-cell-sub">After ×${estDmgMult.toFixed(2)} multiplier</div></div>
       ${tots.ohTotal>0?`<div class="claim-cell"><div class="claim-cell-label">Job Overheads</div><div class="claim-cell-value">${fmtAU(tots.ohTotal)}</div><div class="claim-cell-sub">Transport, site, packaging…</div></div>`:''}
-      <div class="claim-cell highlight"><div class="claim-cell-label">Total Restoration</div><div class="claim-cell-value">${fmtAU(tots.restore)}</div><div class="claim-cell-sub">Items + overheads</div></div>
+      <div class="claim-cell highlight"><div class="claim-cell-label">Total Restoration</div><div class="claim-cell-value">${fmtAU(tots.restore)}<span class="gst-tag">+ GST</span></div><div class="claim-cell-sub">Items + overheads</div></div>
       <div class="claim-cell"><div class="claim-cell-label">Replacement Value</div><div class="claim-cell-value">${fmtAU(tots.repl)}</div><div class="claim-cell-sub">T${estTier} ${EST_TIER_NAMES[estTier-1]} tier</div></div>
       <div class="claim-cell highlight"><div class="claim-cell-label">Client Saving</div><div class="claim-cell-value">${fmtAU(tots.saving)}</div><div class="claim-cell-sub">${pct.toFixed(1)}% restore vs replacement</div></div>
     </div>
@@ -4758,7 +4848,7 @@ function generateEstReport(){
         <h4>Restoration Cost Build-up</h4>
         <div class="oh-line"><span class="ohl">Items restoration (after ×${estDmgMult.toFixed(2)})</span><span class="ohv">${fmtAU(tots.restoreItems)}</span></div>
         <div class="oh-line"><span class="ohl">Job overheads</span><span class="ohv">+ ${fmtAU(tots.ohTotal)}</span></div>
-        <div class="oh-line" style="margin-top:4px;padding-top:4px;border-top:2px solid var(--line)"><span><strong>Total Restoration Claim</strong></span><span class="ohv" style="color:#1565C0"><strong>${fmtAU(tots.restore)}</strong></span></div>
+        <div class="oh-line" style="margin-top:4px;padding-top:4px;border-top:2px solid var(--line)"><span><strong>Total Restoration Claim</strong></span><span class="ohv" style="color:#1565C0"><strong>${fmtAU(tots.restore)}</strong><span class="gst-tag">+ GST</span></span></div>
       </div>
     </div>`:''}
     ${notes?`<div class="pdf-section-notes" style="background:white;border:1px solid var(--line);border-radius:9px;padding:14px 16px"><div style="font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Notes</div><div style="font-size:.8rem;white-space:pre-wrap">${notes}</div></div>`:''}`;
@@ -4777,10 +4867,18 @@ function filterEstSections(reportHTML, opts){
   let keep;
   if(opts.mode==='simple'){
     keep = {header:true, summary:true, totals:true, ratio:true, verdict:true, items:false, notes:false};
+  } else if(opts.mode==='quote_only'){
+    // F-01 — drop comparison-related sections; items stay (with repl pills CSS-hidden)
+    keep = {header:true, summary:false, totals:false, ratio:false, verdict:false, items:true, notes:true};
   } else if(opts.mode==='custom'){
     keep = opts.sections || {};
   } else {
     keep = {header:true, summary:true, totals:true, ratio:true, verdict:true, items:true, notes:true};
+  }
+  // F-03 (8 May 2026) — drop ratio + verdict when comparison is OFF (default)
+  if(opts.mode !== 'custom' && opts.includeComparison === false){
+    keep.ratio = false;
+    keep.verdict = false;
   }
 
   // Each section has a pdf-section-* marker class; remove the ones we don't want
@@ -4913,12 +5011,20 @@ function _printEstReport_run(opts){
     body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
     .report-actions{display:none!important}
   }
+  /* T-02 — GST exclusive marker */
+  .gst-tag{display:inline;font-size:.6em;font-weight:600;color:#666;letter-spacing:.04em;margin-left:4px;vertical-align:baseline;text-transform:uppercase}
+  /* F-01 — Restoration-only quote: hide all replacement values + comparison */
+  body.rest-only .est-repl-pill,
+  body.rest-only .breakdown-tbl th.r:nth-child(n+5):nth-child(-n+7),
+  body.rest-only .breakdown-tbl td.r:nth-child(n+5):nth-child(-n+7),
+  body.rest-only [data-repl],
+  body.rest-only [data-cmp]{display:none}
 </style>
 </head>
-<body>
+<body class="${(opts && opts.mode==='quote_only') ? 'rest-only' : ''}">
   <div class="est-pdf-header">
     <div>
-      <div class="est-pdf-title"><img src="${b.logoData}" alt="${b.name}"/><span>Restoration Estimate</span></div>
+      <div class="est-pdf-title"><img src="${b.logoData}" alt="${b.name}"/><span>${(opts && opts.mode==='quote_only') ? 'Restoration Quote' : 'Restoration Estimate'}</span></div>
       <div class="est-pdf-sub">${b.name} · ${b.tagline}</div>${pdfStageBadgeHtml(b)}
     </div>
     <div class="est-pdf-right">
@@ -4927,6 +5033,8 @@ function _printEstReport_run(opts){
       ${job.assessorName||'—'}
     </div>
   </div>
+
+  ${tierFinderPdfNote()}
 
   ${reportHTML}
 
@@ -6034,6 +6142,9 @@ function openPdfOptionsModal(context){
   // Reset to Detailed preset
   document.querySelector('input[name="pdfPreset"][value="detailed"]').checked = true;
   updatePdfPresetUI();
+  // F-03 — reset comparison checkbox to OFF every time modal opens
+  const _cmpCb = document.getElementById('pdfCompareCheck');
+  if(_cmpCb) _cmpCb.checked = false;
   if(typeof renderInlineBrandPicker==='function') renderInlineBrandPicker('pdfBrandPills');
   if(typeof renderAuthorSelect==='function') renderAuthorSelect('pdfAuthorSelect');
 
@@ -6082,6 +6193,10 @@ function generatePdfWithOptions(){
   const envCb = document.getElementById('pdfEnvCheck');
   opts.environmental = !!(envCb && envCb.checked);
 
+  // F-03 (8 May 2026) — Replacement vs Restoration comparison opt-in
+  const cmpCb = document.getElementById('pdfCompareCheck');
+  opts.includeComparison = !!(cmpCb && cmpCb.checked);
+
   closePdfOptionsModal();
   // Small delay so the modal close animation completes before opening the PDF tab
   setTimeout(()=>{
@@ -6103,8 +6218,8 @@ const RP_PHOTO_KEY_NR  = 'ccpro_nr_photos';
 const RP_PHOTO_KEY_ISP = 'ccpro_isp_photos';
 const RP_FORM_KEY_NR   = 'ccpro_nr_form';
 const RP_FORM_KEY_ISP  = 'ccpro_isp_form';
-const RP_MAX_DIM = 1400;     // px on long side after resize
-const RP_JPEG_Q  = 0.82;     // JPEG quality for compression
+const RP_MAX_DIM = 1000;     // B-01 (8 May 2026) reduced 1400→1000 to fit more photos in localStorage
+const RP_JPEG_Q  = 0.70;     // B-01 (8 May 2026) reduced 0.82→0.70 for smaller base64 size
 
 function rpPhotoKey(type){ return type==='nonrest' ? RP_PHOTO_KEY_NR : RP_PHOTO_KEY_ISP; }
 function rpFormKey(type){  return type==='nonrest' ? RP_FORM_KEY_NR  : RP_FORM_KEY_ISP; }
@@ -6114,8 +6229,65 @@ function getReportPhotos(type){
   catch(e){ return []; }
 }
 function setReportPhotos(type, photos){
-  try{ localStorage.setItem(rpPhotoKey(type), JSON.stringify(photos)); }
-  catch(e){ alert('Storage limit reached. Try removing some photos or generating the PDF and clearing.'); }
+  try{
+    localStorage.setItem(rpPhotoKey(type), JSON.stringify(photos));
+    return { ok:true, saved: photos.length };
+  }catch(e){
+    return { ok:false, error:e, saved: 0 };
+  }
+}
+
+// B-01 — try to save the largest possible subset that fits in the quota.
+// Returns { saved, dropped, droppedNames }.
+function setReportPhotosBestEffort(type, photos){
+  // First try the full set — common case
+  let res = setReportPhotos(type, photos);
+  if(res.ok) return { saved: res.saved, dropped: 0, droppedNames: [] };
+  // Quota hit — binary search for the largest prefix that fits
+  let lo = 0, hi = photos.length, best = 0;
+  while(lo <= hi){
+    const mid = Math.floor((lo + hi) / 2);
+    const tryRes = setReportPhotos(type, photos.slice(0, mid));
+    if(tryRes.ok){ best = mid; lo = mid + 1; }
+    else hi = mid - 1;
+  }
+  // Save the best prefix that worked
+  setReportPhotos(type, photos.slice(0, best));
+  const droppedNames = photos.slice(best).map(p => p.fname || p.id || 'unnamed');
+  return { saved: best, dropped: droppedNames.length, droppedNames: droppedNames };
+}
+
+// B-01 — return localStorage usage stats for the photos store
+function getPhotoStorageStats(type){
+  const raw = localStorage.getItem(rpPhotoKey(type)) || '[]';
+  const bytes = new Blob([raw]).size;
+  const kb = Math.round(bytes / 1024);
+  // Browsers don't expose remaining quota directly; rough estimate is 5 MB origin total.
+  // Photos share the origin with other ccpro_* keys, so headroom varies.
+  return { bytes:bytes, kb:kb, count:JSON.parse(raw).length };
+}
+
+// B-01 — re-run all stored photos through the current (smaller) resize pipeline
+async function recompressAllPhotos(type){
+  const photos = getReportPhotos(type);
+  if(!photos.length){ alert('No photos to recompress.'); return; }
+  if(!confirm('Recompress all ' + photos.length + ' photo' + (photos.length===1?'':'s') + ' to the new smaller size? This is safe but may take a few seconds and reduces image quality slightly to save storage.')) return;
+  let ok = 0, fail = 0;
+  for(let i = 0; i < photos.length; i++){
+    try{
+      const smaller = await resizeDataUrl(photos[i].data, RP_MAX_DIM, RP_JPEG_Q);
+      photos[i].data = smaller;
+      ok++;
+    }catch(e){ fail++; console.warn('recompress fail for photo', i, e); }
+  }
+  const result = setReportPhotosBestEffort(type, photos);
+  renderReportPhotos(type);
+  let msg = '✓ Recompressed ' + ok + ' of ' + photos.length + ' photos.';
+  if(fail) msg += '\n⚠ ' + fail + ' failed to recompress.';
+  if(result.dropped) msg += '\n⚠ ' + result.dropped + ' could not fit even after recompression: ' + result.droppedNames.slice(0,5).join(', ') + (result.droppedNames.length>5?'...':'');
+  const stats = getPhotoStorageStats(type);
+  msg += '\n\nStorage now used: ' + stats.kb + ' KB (' + stats.count + ' photos).';
+  alert(msg);
 }
 
 function openReportPanel(which){
@@ -6166,7 +6338,9 @@ function handlePhotoDrop(event, type){
 
 async function ingestPhotoFiles(files, type){
   if(!files.length) return;
-  const photos = getReportPhotos(type);
+  const existing = getReportPhotos(type);
+  const photos = existing.slice();
+  let loadFails = [];
   for(const f of files){
     try{
       const dataUrl = await readFileAsDataURL(f);
@@ -6175,10 +6349,22 @@ async function ingestPhotoFiles(files, type){
         ? { id:'p'+Date.now()+Math.random().toString(36).slice(2,6), data:resized, fname:f.name, item:'', brand:'', size:'', reason:'' }
         : { id:'p'+Date.now()+Math.random().toString(36).slice(2,6), data:resized, fname:f.name, caption:'' };
       photos.push(newPhoto);
-    }catch(e){ console.error('Photo ingest failed',e); alert('Could not load '+f.name+': '+e.message); }
+    }catch(e){ console.error('Photo ingest failed',e); loadFails.push(f.name); }
   }
-  setReportPhotos(type, photos);
+  // B-01 — best-effort save: keep what fits, name what didn't
+  const result = setReportPhotosBestEffort(type, photos);
   renderReportPhotos(type);
+  if(loadFails.length){
+    alert('Could not load these files: ' + loadFails.join(', '));
+  }
+  if(result.dropped > 0){
+    const stats = getPhotoStorageStats(type);
+    alert('Storage limit reached.\n\n' +
+          result.dropped + ' photo' + (result.dropped===1?'':'s') + ' could not be saved: ' +
+          result.droppedNames.slice(0,5).join(', ') + (result.droppedNames.length>5?'...':'') +
+          '\n\nStorage now: ' + stats.kb + ' KB / ~5 MB cap.\n\n' +
+          'Try the 🗜️ Recompress button below the photos to shrink existing ones, then re-add the failed images. Or generate the report now and clear after.');
+  }
 }
 
 function readFileAsDataURL(file){
@@ -6214,6 +6400,20 @@ function renderReportPhotos(type){
   const grid = document.getElementById(type==='nonrest' ? 'nrPhotoGrid' : 'ispPhotoGrid');
   if(!grid) return;
   const photos = getReportPhotos(type);
+  // B-01 — render storage stats into the matching status div
+  try{
+    const statsEl = document.getElementById(type==='nonrest' ? 'nrPhotoStats' : 'ispPhotoStats');
+    if(statsEl){
+      const s = getPhotoStorageStats(type);
+      const pct = Math.min(100, Math.round((s.kb / 5120) * 100));
+      const colour = pct < 60 ? '#2E7D32' : pct < 85 ? '#E65100' : '#B71C1C';
+      statsEl.innerHTML = s.count + ' photo' + (s.count===1?'':'s') +
+        ' · <span style="color:' + colour + ';font-weight:600">' + s.kb + ' KB</span> used' +
+        (pct >= 60 ? ' (' + pct + '% of ~5 MB cap)' : '') +
+        '  <button class="rp-btn rp-btn-ghost" style="font-size:.7rem;padding:3px 10px;margin-left:10px" onclick="recompressAllPhotos(\''+type+'\')">🗜️ Recompress</button>' +
+        '  <button class="rp-btn rp-btn-ghost" style="font-size:.7rem;padding:3px 10px" onclick="if(confirm(\'Clear all photos? This cannot be undone.\')){setReportPhotos(\''+type+'\',[]);renderReportPhotos(\''+type+'\');}">✕ Clear all</button>';
+    }
+  }catch(e){}
   if(!photos.length){
     grid.innerHTML = '<div class="rp-empty" style="grid-column:1/-1">No photos added yet — drop or click above to add.</div>';
     return;
@@ -6395,7 +6595,7 @@ function generateInspectionPDF(){
       <div class="section-head">— Calculator Totals (snapshot)</div>
       <div class="price-grid">
         <div class="price-cell"><div class="pl">Total Replacement</div><div class="pv">${fmt(r.totalRepl)}</div></div>
-        <div class="price-cell"><div class="pl">Total Restoration</div><div class="pv">${fmt(r.totalFull)}</div></div>
+        <div class="price-cell"><div class="pl">Total Restoration</div><div class="pv">${fmt(r.totalFull)}<span class="gst-tag">+ GST</span></div></div>
         <div class="price-cell"><div class="pl">% of Replacement</div><div class="pv">${r.restPct.toFixed(1)}%</div></div>
         <div class="price-cell"><div class="pl">Saving</div><div class="pv" style="color:#1B5E20">${fmt(r.saving)}</div></div>
       </div>`;
@@ -6407,7 +6607,7 @@ function generateInspectionPDF(){
           <div class="section-head">— Estimate Totals (snapshot)</div>
           <div class="price-grid">
             <div class="price-cell"><div class="pl">Items</div><div class="pv">${tots.qty}</div></div>
-            <div class="price-cell"><div class="pl">Restoration Total</div><div class="pv">${fmt(tots.restore)}</div></div>
+            <div class="price-cell"><div class="pl">Restoration Total</div><div class="pv">${fmt(tots.restore)}<span class="gst-tag">+ GST</span></div></div>
             <div class="price-cell"><div class="pl">Replacement Value</div><div class="pv">${fmt(tots.repl)}</div></div>
             <div class="price-cell"><div class="pl">Saving</div><div class="pv" style="color:#1B5E20">${fmt(tots.saving)}</div></div>
           </div>`;
@@ -11797,10 +11997,10 @@ function maOpenReport(){
 
   html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:16px 0">';
   html += '<div style="padding:14px;background:var(--cream);border-radius:6px;border:1px solid var(--line)"><div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;font-weight:600">Jobs analysed</div><div style="font-size:1.4rem;font-weight:700">' + agg.jobCount + '</div></div>';
-  html += '<div style="padding:14px;background:var(--cream);border-radius:6px;border:1px solid var(--line)"><div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;font-weight:600">CS Revenue</div><div style="font-size:1.4rem;font-weight:700">' + _maFmt$(agg.csRevenue) + '</div></div>';
-  html += '<div style="padding:14px;background:var(--cream);border-radius:6px;border:1px solid var(--line)"><div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;font-weight:600">CS Margin</div><div style="font-size:1.4rem;font-weight:700;color:' + _maMarginColour(agg.csMarginPct) + '">' + _maFmt$(agg.csMargin) + ' (' + _maFmtPct(agg.csMarginPct) + ')</div></div>';
-  html += '<div style="padding:14px;background:var(--cream);border-radius:6px;border:1px solid var(--line)"><div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;font-weight:600">MDC Margin</div><div style="font-size:1.4rem;font-weight:700;color:' + _maMarginColour(agg.mdcMarginPct) + '">' + _maFmt$(agg.mdcMargin) + ' (' + _maFmtPct(agg.mdcMarginPct) + ')</div></div>';
-  html += '<div style="padding:14px;background:#0D1B35;color:white;border-radius:6px"><div style="font-size:.7rem;text-transform:uppercase;font-weight:600;opacity:.8">Total system margin</div><div style="font-size:1.4rem;font-weight:700">' + _maFmt$(agg.totalSystemMargin) + ' (' + _maFmtPct(agg.totalSystemMarginPct) + ')</div></div>';
+  html += '<div style="padding:14px;background:var(--cream);border-radius:6px;border:1px solid var(--line)"><div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;font-weight:600">CS Revenue</div><div style="font-size:1.4rem;font-weight:700">' + _maFmt$(agg.csRevenue) + '<span class="gst-tag">+ GST</span></div></div>';
+  html += '<div style="padding:14px;background:var(--cream);border-radius:6px;border:1px solid var(--line)"><div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;font-weight:600">CS Margin</div><div style="font-size:1.4rem;font-weight:700;color:' + _maMarginColour(agg.csMarginPct) + '">' + _maFmt$(agg.csMargin) + ' (' + _maFmtPct(agg.csMarginPct) + ')<span class="gst-tag">+ GST</span></div></div>';
+  html += '<div style="padding:14px;background:var(--cream);border-radius:6px;border:1px solid var(--line)"><div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;font-weight:600">MDC Margin</div><div style="font-size:1.4rem;font-weight:700;color:' + _maMarginColour(agg.mdcMarginPct) + '">' + _maFmt$(agg.mdcMargin) + ' (' + _maFmtPct(agg.mdcMarginPct) + ')<span class="gst-tag">+ GST</span></div></div>';
+  html += '<div style="padding:14px;background:#0D1B35;color:white;border-radius:6px"><div style="font-size:.7rem;text-transform:uppercase;font-weight:600;opacity:.8">Total system margin</div><div style="font-size:1.4rem;font-weight:700">' + _maFmt$(agg.totalSystemMargin) + ' (' + _maFmtPct(agg.totalSystemMarginPct) + ')<span class="gst-tag" style="color:rgba(255,255,255,.7)">+ GST</span></div></div>';
   html += '</div>';
 
   html += '<h4 style="margin:18px 0 6px">Per-job breakdown</h4>';
