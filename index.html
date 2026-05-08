@@ -3379,7 +3379,9 @@ function _exportReportPDF_run(opts){
   .gst-tag{display:inline;font-size:.6em;font-weight:600;color:#666;letter-spacing:.04em;margin-left:4px;vertical-align:baseline;text-transform:uppercase}
   /* F-01 (8 May 2026) — Restoration-only quote mode: hide replacement + comparison columns */
   body.rest-only .repl-col,
-  body.rest-only .cmp-col{display:none}
+  body.rest-only .cmp-col,
+  body.rest-only [data-repl],
+  body.rest-only [data-cmp]{display:none}
   body.rest-only .rest-only-subtotal-label{font-weight:700}
 </style>
 </head>
@@ -3433,6 +3435,30 @@ function _exportReportPDF_run(opts){
     <div class="sb-label" style="color:#555">Items Assessed</div>
     <div class="sb-value" style="color:#0D1B35">${r.rows.reduce((a,rw)=>a+rw.qty,0)} items</div>
     <div class="sb-desc" style="color:#555">${r.rows.length} item type${r.rows.length!==1?'s':''} across ${catsInClaim.length} categor${catsInClaim.length!==1?'ies':'y'}</div>
+  </div>
+</div>
+
+<!-- ══ SECTION 2.5: HEADLINE SUMMARY ══ -->
+<div class="summary-grid" style="margin-bottom:16px">
+  <div class="sum-box" style="background:#F5F5F5">
+    <div class="sb-lbl">Total Items</div>
+    <div class="sb-amt" style="color:${b.ink}">${r.rows.reduce((a,rw)=>a+rw.qty,0)}</div>
+    <div class="sb-sub">${r.rows.length} item type${r.rows.length!==1?'s':''} across ${catsInClaim.length} categor${catsInClaim.length!==1?'ies':'y'}</div>
+  </div>
+  <div class="sum-box" style="background:#E3F2FD">
+    <div class="sb-lbl">Total Restoration Claim</div>
+    <div class="sb-amt" style="color:${b.primaryDark}">${fmt(r.totalFull)}<span class="gst-tag">+ GST</span></div>
+    <div class="sb-sub">Items + overheads</div>
+  </div>
+  <div class="sum-box" data-repl style="background:#EAE3D6">
+    <div class="sb-lbl">Total Replacement Value</div>
+    <div class="sb-amt" style="color:${b.ink}">${fmt(r.totalRepl)}</div>
+    <div class="sb-sub">T${r.tier} ${r.tierNames[r.tier-1]} tier reference</div>
+  </div>
+  <div class="sum-box" data-cmp style="background:#E8F5E9">
+    <div class="sb-lbl">Client Saving</div>
+    <div class="sb-amt" style="color:#1B5E20">${fmt(r.saving)}</div>
+    <div class="sb-sub">${r.savPct.toFixed(1)}% less than replacement</div>
   </div>
 </div>
 
@@ -4810,8 +4836,8 @@ function generateEstReport(){
       <div class="claim-cell"><div class="claim-cell-label">Items Restoration</div><div class="claim-cell-value">${fmtAU(tots.restoreItems)}</div><div class="claim-cell-sub">After ×${estDmgMult.toFixed(2)} multiplier</div></div>
       ${tots.ohTotal>0?`<div class="claim-cell"><div class="claim-cell-label">Job Overheads</div><div class="claim-cell-value">${fmtAU(tots.ohTotal)}</div><div class="claim-cell-sub">Transport, site, packaging…</div></div>`:''}
       <div class="claim-cell highlight"><div class="claim-cell-label">Total Restoration</div><div class="claim-cell-value">${fmtAU(tots.restore)}<span class="gst-tag">+ GST</span></div><div class="claim-cell-sub">Items + overheads</div></div>
-      <div class="claim-cell"><div class="claim-cell-label">Replacement Value</div><div class="claim-cell-value">${fmtAU(tots.repl)}</div><div class="claim-cell-sub">T${estTier} ${EST_TIER_NAMES[estTier-1]} tier</div></div>
-      <div class="claim-cell highlight"><div class="claim-cell-label">Client Saving</div><div class="claim-cell-value">${fmtAU(tots.saving)}</div><div class="claim-cell-sub">${pct.toFixed(1)}% restore vs replacement</div></div>
+      <div class="claim-cell" data-repl><div class="claim-cell-label">Replacement Value</div><div class="claim-cell-value">${fmtAU(tots.repl)}</div><div class="claim-cell-sub">T${estTier} ${EST_TIER_NAMES[estTier-1]} tier</div></div>
+      <div class="claim-cell highlight" data-cmp><div class="claim-cell-label">Client Saving</div><div class="claim-cell-value">${fmtAU(tots.saving)}</div><div class="claim-cell-sub">${pct.toFixed(1)}% restore vs replacement</div></div>
     </div>
     <div class="pdf-section-ratio" style="margin-bottom:16px">
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px">
@@ -4838,19 +4864,19 @@ function generateEstReport(){
         <tbody>${tRows}</tbody>
       </table>
     </div>
-    ${tots.ohTotal>0?`<div class="oh-breakdown-row pdf-section-overheads" style="margin-bottom:${notes?'16px':'0'};margin-top:14px">
-      <div class="oh-breakdown-card">
+    <div class="oh-breakdown-row pdf-section-overheads" style="margin-bottom:${notes?'16px':'0'};margin-top:14px">
+      ${tots.ohTotal>0?`<div class="oh-breakdown-card">
         <h4>Overhead Breakdown</h4>
         ${tots.oh.lines.filter(l=>l.v>0).map(l=>`<div class="oh-line"><span class="ohl">${l.l}</span><span class="ohv">${fmtAU(l.v)}</span></div>`).join('')||'<div class="oh-line"><span class="ohl" style="font-style:italic">No overheads</span></div>'}
         <div class="oh-line" style="margin-top:4px;padding-top:4px;border-top:2px solid var(--line)"><span><strong>Total Overheads</strong></span><span class="ohv"><strong>${fmtAU(tots.ohTotal)}</strong></span></div>
-      </div>
+      </div>`:''}
       <div class="oh-breakdown-card">
         <h4>Restoration Cost Build-up</h4>
         <div class="oh-line"><span class="ohl">Items restoration (after ×${estDmgMult.toFixed(2)})</span><span class="ohv">${fmtAU(tots.restoreItems)}</span></div>
-        <div class="oh-line"><span class="ohl">Job overheads</span><span class="ohv">+ ${fmtAU(tots.ohTotal)}</span></div>
+        ${tots.ohTotal>0?`<div class="oh-line"><span class="ohl">Job overheads</span><span class="ohv">+ ${fmtAU(tots.ohTotal)}</span></div>`:''}
         <div class="oh-line" style="margin-top:4px;padding-top:4px;border-top:2px solid var(--line)"><span><strong>Total Restoration Claim</strong></span><span class="ohv" style="color:#1565C0"><strong>${fmtAU(tots.restore)}</strong><span class="gst-tag">+ GST</span></span></div>
       </div>
-    </div>`:''}
+    </div>
     ${notes?`<div class="pdf-section-notes" style="background:white;border:1px solid var(--line);border-radius:9px;padding:14px 16px"><div style="font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Notes</div><div style="font-size:.8rem;white-space:pre-wrap">${notes}</div></div>`:''}`;
 
   const z = document.getElementById('estResultZone');
@@ -4869,7 +4895,9 @@ function filterEstSections(reportHTML, opts){
     keep = {header:true, summary:true, totals:true, ratio:true, verdict:true, items:false, notes:false};
   } else if(opts.mode==='quote_only'){
     // F-01 — drop comparison-related sections; items stay (with repl pills CSS-hidden)
-    keep = {header:true, summary:false, totals:false, ratio:false, verdict:false, items:true, notes:true};
+    // 8 May 2026 — keep totals: replacement + saving cells inside it carry data-repl/data-cmp
+    // and are hidden via body.rest-only CSS, so user still sees Items + Restoration totals
+    keep = {header:true, summary:false, totals:true, ratio:false, verdict:false, items:true, notes:true};
   } else if(opts.mode==='custom'){
     keep = opts.sections || {};
   } else {
