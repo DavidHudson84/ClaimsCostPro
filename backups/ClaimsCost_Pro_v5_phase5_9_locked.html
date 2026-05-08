@@ -838,10 +838,6 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--cream);color:var(--
 .add-custom-bar button{padding:6px 14px;background:var(--amber);color:var(--ink);border:none;border-radius:6px;font-weight:600;font-size:.78rem;cursor:pointer;font-family:'IBM Plex Sans',sans-serif}
 .add-custom-bar button:hover{background:var(--amber2)}
 
-/* Per-category Add Custom Item button */
-.add-custom-cat-btn{display:block;width:100%;margin-top:10px;padding:8px 14px;background:transparent;color:var(--ink);border:1.5px dashed #BBBBBB;border-radius:6px;font-size:.78rem;font-weight:500;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;transition:all .15s}
-.add-custom-cat-btn:hover{background:#FFFBF0;border-color:var(--amber);color:var(--ink)}
-
 /* Add Custom modal */
 .acm-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;padding:20px;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .acm-overlay.open{display:flex}
@@ -2963,9 +2959,7 @@ function renderItems(){
         </div>
       </div>`;
     });
-    // 8 May 2026 — per-category Add Custom Item button
-    const catEsc = cat.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-    html+=`</div><button class="add-custom-cat-btn" onclick="openAddCustomModal('calc','${catEsc}')">+ Add Custom Item to ${cat}</button></div>`;
+    html+=`</div></div>`;
   });
   if(!html)html='<div class="empty">No items match your filter.</div>';
   document.getElementById('itemsContainer').innerHTML=html;updateBadge();
@@ -4433,15 +4427,12 @@ function renderEstBlocks(){
       </div>`;
     }).join('');
 
-    // 8 May 2026 — per-category Add Custom Item button
-    const _catEsc = cat.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
     return `<div class="est-cat-block">
       <div class="est-cat-header">
         <span>${cat}</span>
         ${catTotal>0?`<span class="est-cat-total">${fmtAU(catTotal)}</span>`:''}
       </div>
       ${rows}
-      <button class="add-custom-cat-btn" onclick="openAddCustomModal('est','${_catEsc}')">+ Add Custom Item to ${cat}</button>
     </div>`;
   }).join('');
 }
@@ -6627,20 +6618,18 @@ function mergeCustomIntoLists(){
 }
 
 let _acmScope = 'calc';
-function openAddCustomModal(scope, prefillCat){
+function openAddCustomModal(scope){
   _acmScope = scope;
   document.getElementById('acmTitle').textContent = scope==='calc' ? 'Add Custom Item — Calculator' : 'Add Custom Item — Estimate';
   document.getElementById('acmSub').textContent = 'Add a one-off item that isn\'t in the standard list. Persists across jobs (stored locally).';
   document.getElementById('acmName').value = '';
-  document.getElementById('acmCat').value  = prefillCat || '';
+  document.getElementById('acmCat').value  = '';
   document.getElementById('acmRepl').value = '';
   document.getElementById('acmRestore').value = '';
-  document.getElementById('acmQty').value = '';
   // Populate category datalist
   const cats = scope==='calc' ? [...new Set(items.map(i=>i.cat))] : [...new Set(estPricing.map(i=>i.cat))];
   document.getElementById('acmCatList').innerHTML = cats.map(c=>`<option value="${c}">`).join('');
   document.getElementById('acmOverlay').classList.add('open');
-  // Focus name (or qty if cat is pre-filled, since user already chose category)
   setTimeout(()=>document.getElementById('acmName').focus(),50);
 }
 function closeAddCustomModal(){ document.getElementById('acmOverlay').classList.remove('open'); }
@@ -6665,35 +6654,10 @@ function saveCustomItem(){
   const stored = getStoredCustom(_acmScope);
   stored.push(newItem);
   setStoredCustom(_acmScope, stored);
-
-  // Read initial qty (8 May 2026 — qty field added to modal)
-  const initialQty = Math.max(0, parseInt(document.getElementById('acmQty').value) || 0);
-  if(initialQty > 0){
-    if(_acmScope === 'calc') quantities[name] = initialQty;
-    else estQtys[name] = initialQty;
-    // Sync to current job so qty persists on reload
-    if(typeof _currentJobV6 !== 'undefined' && _currentJobV6){
-      try {
-        if(_acmScope === 'calc'){
-          if(!_currentJobV6.calc) _currentJobV6.calc = (typeof blankCalcState==='function' ? blankCalcState() : {quantities:{}});
-          if(!_currentJobV6.calc.quantities) _currentJobV6.calc.quantities = {};
-          _currentJobV6.calc.quantities[name] = initialQty;
-        } else {
-          if(!_currentJobV6.est) _currentJobV6.est = (typeof blankEstState==='function' ? blankEstState() : {quantities:{}});
-          if(!_currentJobV6.est.quantities) _currentJobV6.est.quantities = {};
-          _currentJobV6.est.quantities[name] = initialQty;
-        }
-        _currentJobV6.updatedAt = new Date().toISOString();
-        if(typeof saveJobToV6Store === 'function') saveJobToV6Store(_currentJobV6);
-        if(typeof logJobActivity === 'function') logJobActivity(_currentJobV6, 'Custom item added: ' + name + ' ×' + initialQty + ' (' + (_acmScope==='calc'?'Calculator':'Estimate') + ')');
-      } catch(e){ console.warn('Custom item job sync failed', e); }
-    }
-  }
-
   closeAddCustomModal();
   // Re-render
-  if(_acmScope==='calc'){ populateCatFilter(); renderItems(); if(typeof updateBadge==='function') updateBadge(); }
-  else { renderEstBlocks(); updateEstTotals(); if(typeof updateEstBadge==='function') updateEstBadge(); }
+  if(_acmScope==='calc'){ populateCatFilter(); renderItems(); }
+  else { renderEstBlocks(); updateEstTotals(); }
 }
 
 function removeCustomItem(scope, escName){
@@ -12085,8 +12049,6 @@ window.addEventListener('resize', syncJobBarToggleVisibility);
       <div><label>Replacement Cost ($)</label><input id="acmRepl" type="number" min="0" step="1" placeholder="e.g. 850"/></div>
       <div><label>Restoration Cost ($)</label><input id="acmRestore" type="number" min="0" step="1" placeholder="e.g. 120"/></div>
     </div>
-    <label>Initial Quantity (optional)</label>
-    <input id="acmQty" type="number" min="0" step="1" placeholder="Leave blank for 0" value=""/>
     <div class="acm-actions">
       <button class="acm-btn acm-btn-ghost" onclick="closeAddCustomModal()">Cancel</button>
       <button class="acm-btn acm-btn-primary" onclick="saveCustomItem()">Add Item</button>
