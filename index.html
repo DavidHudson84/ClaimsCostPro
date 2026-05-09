@@ -3132,7 +3132,7 @@ function calculate(){
   z.scrollIntoView({behavior:'smooth'});
 }
 function gv(id){return document.getElementById(id)?.value||''}
-function fmt(n){return'$'+Math.round(n).toLocaleString('en-AU')}
+function fmt(n){return'$'+(Number(n)||0).toLocaleString('en-AU',{minimumFractionDigits:2,maximumFractionDigits:2})}
 
 
 // ─── Environmental Impact helper ──────────────────────────────
@@ -4478,7 +4478,7 @@ let estDmgCode = 'STD';
 // ── helpers ───────────────────────────────────────────────────
 function getEstRepl(item, tier){ const ov=getOverride('est','repl',item.name); if(ov!=null) return ov; return [item.t1,item.t2,item.t3,item.t4,item.t5][tier-1]||0 }
 function getEstRestore(item){ const ov=getOverride('est','restore',item.name); if(ov!=null) return ov; return (typeof plGetActiveRestore==='function') ? plGetActiveRestore(item.name, item.restore) : item.restore; }
-function fmtAU(n){ return '$'+Math.round(n).toLocaleString('en-AU') }
+function fmtAU(n){ return '$'+(Number(n)||0).toLocaleString('en-AU',{minimumFractionDigits:2,maximumFractionDigits:2}) }
 
 // ── Tier selector ─────────────────────────────────────────────
 function selectEstTier(el){
@@ -10106,7 +10106,7 @@ function ciExactReplacementTotal(){
 // Format AUD short
 function ciFmt$(n){
   const v = parseFloat(n) || 0;
-  return '$' + v.toLocaleString('en-AU', { maximumFractionDigits: 0 });
+  return '$' + v.toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 // Pretty subtext describing the calc settings used
